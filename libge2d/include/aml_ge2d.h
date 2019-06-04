@@ -29,8 +29,8 @@ typedef struct aml_ge2d {
     void *cmemParm_dst;
 } aml_ge2d_t;
 
-int aml_ge2d_init(void);
-void aml_ge2d_exit(void);
+int aml_ge2d_init(aml_ge2d_t *pge2d);
+void aml_ge2d_exit(aml_ge2d_t *pge2d);
 
 int aml_ge2d_mem_alloc_ion(aml_ge2d_t *pge2d);
 void aml_ge2d_mem_free_ion(aml_ge2d_t *pge2d);
@@ -39,13 +39,11 @@ int aml_ge2d_mem_alloc(aml_ge2d_t *pge2d);
 void aml_ge2d_mem_free(aml_ge2d_t *pge2d);
 int aml_ge2d_process(aml_ge2d_info_t *pge2dinfo);
 int aml_ge2d_process_ion(aml_ge2d_info_t *pge2dinfo);
-int aml_ge2d_get_cap(void);
 int  aml_ge2d_invalid_cache(aml_ge2d_info_t *pge2dinfo);
 
 #if defined (__cplusplus)
 }
 #endif
-
 
 #endif
 

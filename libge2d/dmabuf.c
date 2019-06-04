@@ -25,6 +25,7 @@
 
 #define PAGE_ALIGN(x)        (((x) + 4095) & ~4095)
 static int ge2d_fd = -1;
+static int ref_count = 0;
 
 static int ge2d_alloc_dma_buffer(int fd, unsigned int dir, unsigned int len)
 {
@@ -73,14 +74,28 @@ static int ge2d_free_dma_buffer(int fd, int index)
 
 int dmabuf_init(void)
 {
+    if (ge2d_fd >= 0) {
+        ref_count++;
+        printf("init: /dev/ge2d already opened, incremented ref_count %d\n",
+            ref_count);
+        return ge2d_fd;
+    }
     ge2d_fd = ge2d_open();
+    if (ge2d_fd < 0) {
+        printf("init: Failed to open /dev/ge2d: '%s'\n", strerror(errno));
+        return -1;
+    }
+    ref_count++;
     return ge2d_fd;
 }
 
 void dmabuf_exit(void)
 {
-    ge2d_close(ge2d_fd);
-    ge2d_fd = -1;
+    ref_count--;
+    if (ref_count == 0) {
+        ge2d_close(ge2d_fd);
+        ge2d_fd = -1;
+    }
 }
 
 int dmabuf_alloc(int type, unsigned int len)

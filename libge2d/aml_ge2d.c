@@ -24,8 +24,6 @@
 
 #define CANVAS_ALIGNED(x)	(((x) + 31) & ~31)
 
-static int fd_ge2d = -1;
-
 static void ge2d_setinfo_size(aml_ge2d_t *pge2d)
 {
     unsigned int input_image_width  = 0, input2_image_width = 0, output_image_width = 0;
@@ -128,19 +126,29 @@ static void ge2d_mem_free(aml_ge2d_t *pge2d)
         munmap(pge2d->ge2dinfo.src_info[1].vaddr, pge2d->src2_size);
     if (pge2d->ge2dinfo.dst_info.vaddr)
         munmap(pge2d->ge2dinfo.dst_info.vaddr, pge2d->dst_size);
-    if (pge2d->ge2dinfo.src_info[0].shared_fd > 0)
+    if (pge2d->ge2dinfo.src_info[0].shared_fd != -1)
         close(pge2d->ge2dinfo.src_info[0].shared_fd);
-    if (pge2d->ge2dinfo.src_info[1].shared_fd > 0)
+    if (pge2d->ge2dinfo.src_info[1].shared_fd != -1)
         close(pge2d->ge2dinfo.src_info[1].shared_fd);
-    if (pge2d->ge2dinfo.dst_info.shared_fd > 0)
+    if (pge2d->ge2dinfo.dst_info.shared_fd != -1)
         close(pge2d->ge2dinfo.dst_info.shared_fd);
 
     D_GE2D("ge2d_mem_free!\n");
 }
 
-int aml_ge2d_init(void)
+int aml_ge2d_get_cap(int fd_ge2d)
 {
-    int ret = -1;
+    return ge2d_get_cap(fd_ge2d);
+}
+
+int aml_ge2d_init(aml_ge2d_t *pge2d)
+{
+    int ret = -1, fd_ge2d;
+
+    pge2d->ge2dinfo.src_info[0].shared_fd = -1;
+    pge2d->ge2dinfo.src_info[1].shared_fd = -1;
+    pge2d->ge2dinfo.dst_info.shared_fd = -1;
+
     fd_ge2d = ge2d_open();
     if (fd_ge2d < 0)
         return ge2d_fail;
@@ -150,23 +158,19 @@ int aml_ge2d_init(void)
     ret = dmabuf_init();
     if (ret < 0)
         return ge2d_fail;
+    pge2d->ge2dinfo.fd = fd_ge2d;
+    pge2d->ge2dinfo.cap_attr = aml_ge2d_get_cap(fd_ge2d);
+
     return ge2d_success;
 }
 
-
-void aml_ge2d_exit(void)
+void aml_ge2d_exit(aml_ge2d_t *pge2d)
 {
-    if (fd_ge2d >= 0)
-        ge2d_close(fd_ge2d);
+    if (pge2d->ge2dinfo.fd >= 0)
+        ge2d_close(pge2d->ge2dinfo.fd);
     CMEM_exit();
     dmabuf_exit();
 }
-
-int aml_ge2d_get_cap(void)
-{
-    return ge2d_get_cap(fd_ge2d);
-}
-
 
 void aml_ge2d_mem_free_ion(aml_ge2d_t *pge2d)
 {
@@ -364,16 +368,16 @@ exit:
 int aml_ge2d_process(aml_ge2d_info_t *pge2dinfo)
 {
     int ret = -1;
-    if (fd_ge2d >= 0)
-        ret = ge2d_process(fd_ge2d, pge2dinfo);
+    if (pge2dinfo->fd >= 0)
+        ret = ge2d_process(pge2dinfo->fd, pge2dinfo);
     return ret;
 }
 
 int aml_ge2d_process_ion(aml_ge2d_info_t *pge2dinfo)
 {
     int ret = -1;
-    if (fd_ge2d >= 0)
-        ret = ge2d_process_ion(fd_ge2d, pge2dinfo);
+    if (pge2dinfo->fd >= 0)
+        ret = ge2d_process_ion(pge2dinfo->fd, pge2dinfo);
     return ret;
 }
 

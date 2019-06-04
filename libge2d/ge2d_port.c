@@ -32,8 +32,6 @@
 #define GE2D_BPP_12  12
 #define GE2D_BPP_8   8
 
-static int cap_attr;
-static int b_src_swap = 0;
 static int  pixel_to_ge2d_format(int img_format, int *pge2d_format,int *p_bpp)
 {
     int is_one_plane = -1;
@@ -333,7 +331,7 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
     ge2d_config_ex.alu_const_color = pge2dinfo->const_color;
     ge2d_config_ex.src1_gb_alpha = input_buffer_info->plane_alpha & 0xff;
 
-    if (cap_attr == -1)
+    if (pge2dinfo->cap_attr == -1)
         ret = ioctl(fd, GE2D_CONFIG_EX_ION_EN, &ge2d_config_ex);
     else
         ret = ioctl(fd, GE2D_CONFIG_EX_ION, &ge2d_config_ex);
@@ -573,7 +571,7 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
         ge2d_config_ex.src1_gb_alpha,
         ge2d_config_ex.src1_gb_alpha_en);
 
-    if (cap_attr == -1)
+    if (pge2dinfo->cap_attr == -1)
         ret = ioctl(fd, GE2D_CONFIG_EX_ION_EN, &ge2d_config_ex);
     else
         ret = ioctl(fd, GE2D_CONFIG_EX_ION, &ge2d_config_ex);
@@ -608,10 +606,10 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
     if (is_need_swap_src2(input2_buffer_info->format, input2_buffer_info, output_buffer_info)) {
         input_buffer_info = &pge2dinfo->src_info[1];
         input2_buffer_info = &pge2dinfo->src_info[0];
-        b_src_swap = 1;
+        pge2dinfo->b_src_swap = 1;
         D_GE2D("NOTE:src2 not support nv21/nv12, swap src1 and src2!\n");
     }
-    else if ((cap_attr == 0) && (input_buffer_info->plane_alpha == 0xff) &&
+    else if ((pge2dinfo->cap_attr == 0) && (input_buffer_info->plane_alpha == 0xff) &&
         (input2_buffer_info->plane_alpha != 0xff) &&
         (input_buffer_info->layer_mode != LAYER_MODE_NON) &&
         (input2_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED)) {
@@ -621,11 +619,11 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
         input2_buffer_info = &pge2dinfo->src_info[0];
         //pge2dinfo->gl_alpha &= SRC1_GB_ALPHA_ENABLE;
         //pge2dinfo->gl_alpha |= (input_buffer_info->plane_alpha & 0xff);
-        b_src_swap = 1;
+        pge2dinfo->b_src_swap = 1;
     }
     else
-        b_src_swap = 0;
-    D_GE2D("b_src_swap=%d\n",b_src_swap);
+        pge2dinfo->b_src_swap = 0;
+    D_GE2D("b_src_swap=%d\n",pge2dinfo->b_src_swap);
     memset(&ge2d_config_ex, 0, sizeof(struct config_para_ex_ion_s ));
 
     if (CANVAS_ALLOC == input_buffer_info->memtype) {
@@ -690,7 +688,7 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
     ge2d_config_ex.src2_para.height = input2_buffer_info->rect.h;
     ge2d_config_ex.src2_para.color = input2_buffer_info->def_color;
     ge2d_config_ex.src2_para.fill_color_en = input2_buffer_info->fill_color_en;
-    if (cap_attr == 0x1) {
+    if (pge2dinfo->cap_attr == 0x1) {
         if (input2_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED)
             ge2d_config_ex.src2_cmult_asel = 2;
         else if (input2_buffer_info->layer_mode == LAYER_MODE_COVERAGE)
@@ -909,7 +907,7 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
     ge2d_config_ex.alu_const_color = pge2dinfo->const_color;
     ge2d_config_ex.src1_gb_alpha = input_buffer_info->plane_alpha & 0xff;
     ge2d_config_ex.src1_gb_alpha_en = 1;
-    if (cap_attr == 0x1) {
+    if (pge2dinfo->cap_attr == 0x1) {
         ge2d_config_ex.src2_gb_alpha = input2_buffer_info->plane_alpha & 0xff;
         ge2d_config_ex.src2_gb_alpha_en = 1;
     }
@@ -921,7 +919,7 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
         ge2d_config_ex.src2_gb_alpha,
          ge2d_config_ex.src2_gb_alpha_en,
         ge2d_config_ex.src2_cmult_ad);
-    if (cap_attr == -1)
+    if (pge2dinfo->cap_attr == -1)
         ret = ioctl(fd, GE2D_CONFIG_EX_ION_EN, &ge2d_config_ex);
     else
         ret = ioctl(fd, GE2D_CONFIG_EX_ION, &ge2d_config_ex);
@@ -1345,10 +1343,10 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     if (is_need_swap_src2(input2_buffer_info->format, input2_buffer_info, output_buffer_info)) {
         input_buffer_info = &pge2dinfo->src_info[1];
         input2_buffer_info = &pge2dinfo->src_info[0];
-        b_src_swap = 1;
+        pge2dinfo->b_src_swap = 1;
         D_GE2D("NOTE:src2 not support nv21/nv12, swap src1 and src2!\n");
     }
-    else if ((cap_attr == 0) && (input_buffer_info->plane_alpha == 0xff) &&
+    else if ((pge2dinfo->cap_attr == 0) && (input_buffer_info->plane_alpha == 0xff) &&
         (input2_buffer_info->plane_alpha != 0xff) &&
         (input_buffer_info->layer_mode != LAYER_MODE_NON) &&
         (input2_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED)) {
@@ -1358,11 +1356,11 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
         input2_buffer_info = &pge2dinfo->src_info[0];
         //pge2dinfo->gl_alpha &= SRC1_GB_ALPHA_ENABLE;
         //pge2dinfo->gl_alpha |= (input_buffer_info->plane_alpha & 0xff);
-        b_src_swap = 1;
+        pge2dinfo->b_src_swap = 1;
     }
     else
-        b_src_swap = 0;
-    D_GE2D("b_src_swap=%d\n",b_src_swap);
+        pge2dinfo->b_src_swap = 0;
+    D_GE2D("b_src_swap=%d\n",pge2dinfo->b_src_swap);
     memset(&ge2d_config_para_ex, 0, sizeof(struct config_ge2d_para_ex_s));
     ge2d_config_mem_ex = &(ge2d_config_para_ex.para_config_memtype);
     ge2d_config_mem_ex->ge2d_magic = sizeof(struct config_para_ex_memtype_s);
@@ -1434,7 +1432,7 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     ge2d_config_ex->src2_para.height = input2_buffer_info->rect.h;
     ge2d_config_ex->src2_para.color = input2_buffer_info->def_color;
     ge2d_config_ex->src2_para.fill_color_en = input2_buffer_info->fill_color_en;
-    if (cap_attr == 0x1) {
+    if (pge2dinfo->cap_attr == 0x1) {
         if (input2_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED)
             ge2d_config_ex->src2_cmult_asel = 2;
         else if (input2_buffer_info->layer_mode == LAYER_MODE_COVERAGE)
@@ -1653,7 +1651,7 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     ge2d_config_ex->alu_const_color = pge2dinfo->const_color;
     ge2d_config_ex->src1_gb_alpha = input_buffer_info->plane_alpha & 0xff;
     ge2d_config_ex->src1_gb_alpha_en = 1;
-    if (cap_attr == 0x1) {
+    if (pge2dinfo->cap_attr == 0x1) {
         ge2d_config_ex->src2_gb_alpha = input2_buffer_info->plane_alpha & 0xff;
         ge2d_config_ex->src2_gb_alpha_en = 1;
     }
@@ -1966,7 +1964,9 @@ static int ge2d_strechblit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t
 }
 
 
-static int ge2d_blend(int fd,rectangle_t *srect,rectangle_t *srect2,rectangle_t *drect, unsigned int op)
+static int ge2d_blend(int fd, aml_ge2d_info_t *pge2dinfo,
+                      rectangle_t *srect, rectangle_t *srect2,
+                      rectangle_t *drect, unsigned int op)
 {
     int ret;
     ge2d_op_para_t op_ge2d_info;
@@ -2007,7 +2007,7 @@ static int ge2d_blend(int fd,rectangle_t *srect,rectangle_t *srect2,rectangle_t 
     /* b_src_swap = 1:src1 & src2 swap, so blend factor used dst instead src */
     switch (op) {
         case BLEND_MODE_NONE:
-            if (b_src_swap) {
+            if (pge2dinfo->b_src_swap) {
                 blend_op.color_blending_src_factor = COLOR_FACTOR_ZERO;
                 blend_op.color_blending_dst_factor = COLOR_FACTOR_ONE;
                 blend_op.alpha_blending_src_factor = ALPHA_FACTOR_ZERO;
@@ -2021,7 +2021,7 @@ static int ge2d_blend(int fd,rectangle_t *srect,rectangle_t *srect2,rectangle_t 
             }
             break;
         case BLEND_MODE_PREMULTIPLIED:
-            if (b_src_swap) {
+            if (pge2dinfo->b_src_swap) {
                 blend_op.color_blending_src_factor = COLOR_FACTOR_ONE_MINUS_DST_ALPHA;
                 blend_op.color_blending_dst_factor = COLOR_FACTOR_ONE;
                 blend_op.alpha_blending_src_factor = ALPHA_FACTOR_ONE_MINUS_DST_ALPHA;
@@ -2035,7 +2035,7 @@ static int ge2d_blend(int fd,rectangle_t *srect,rectangle_t *srect2,rectangle_t 
             }
             break;
         case BLEND_MODE_COVERAGE:
-            if (b_src_swap) {
+            if (pge2dinfo->b_src_swap) {
                 blend_op.color_blending_src_factor = COLOR_FACTOR_ONE_MINUS_DST_ALPHA;
                 blend_op.color_blending_dst_factor = COLOR_FACTOR_DST_ALPHA;
                 blend_op.alpha_blending_src_factor = ALPHA_FACTOR_ONE_MINUS_DST_ALPHA;
@@ -2070,7 +2070,9 @@ static int ge2d_blend(int fd,rectangle_t *srect,rectangle_t *srect2,rectangle_t 
 }
 
 
-static int ge2d_blend_noalpha(int fd,rectangle_t *srect,rectangle_t *srect2,rectangle_t *drect, unsigned int op)
+static int ge2d_blend_noalpha(int fd, aml_ge2d_info_t *pge2dinfo,
+                              rectangle_t *srect, rectangle_t *srect2,
+                              rectangle_t *drect, unsigned int op)
 {
     int ret;
     ge2d_op_para_t op_ge2d_info;
@@ -2111,7 +2113,7 @@ static int ge2d_blend_noalpha(int fd,rectangle_t *srect,rectangle_t *srect2,rect
     /* b_src_swap = 1:src1 & src2 swap, so blend factor used dst instead src */
     switch (op) {
         case BLEND_MODE_NONE:
-            if (b_src_swap) {
+            if (pge2dinfo->b_src_swap) {
                 blend_op.color_blending_src_factor = COLOR_FACTOR_ZERO;
                 blend_op.color_blending_dst_factor = COLOR_FACTOR_ONE;
                 blend_op.alpha_blending_src_factor = ALPHA_FACTOR_ZERO;
@@ -2125,7 +2127,7 @@ static int ge2d_blend_noalpha(int fd,rectangle_t *srect,rectangle_t *srect2,rect
             }
             break;
         case BLEND_MODE_PREMULTIPLIED:
-            if (b_src_swap) {
+            if (pge2dinfo->b_src_swap) {
                 blend_op.color_blending_src_factor = COLOR_FACTOR_ONE_MINUS_DST_ALPHA;
                 blend_op.color_blending_dst_factor = COLOR_FACTOR_ONE;
                 blend_op.alpha_blending_src_factor = ALPHA_FACTOR_ONE_MINUS_DST_ALPHA;
@@ -2139,7 +2141,7 @@ static int ge2d_blend_noalpha(int fd,rectangle_t *srect,rectangle_t *srect2,rect
             }
             break;
         case BLEND_MODE_COVERAGE:
-            if (b_src_swap) {
+            if (pge2dinfo->b_src_swap) {
                 blend_op.color_blending_src_factor = COLOR_FACTOR_ONE_MINUS_DST_ALPHA;
                 blend_op.color_blending_dst_factor = COLOR_FACTOR_DST_ALPHA;
                 blend_op.alpha_blending_src_factor = ALPHA_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -2177,11 +2179,12 @@ static int ge2d_blend_noalpha(int fd,rectangle_t *srect,rectangle_t *srect2,rect
 int ge2d_get_cap(int fd)
 {
     int ret = -1;
-    int cap_mask = 0;
+    int cap_mask = 0, cap_attr;
     ret = ioctl(fd, GE2D_GET_CAP, &cap_mask);
     if (ret != 0) {
         E_GE2D("%s,%d,ret %d,ioctl failed!\n",__FUNCTION__,__LINE__, ret);
         cap_attr = -1;
+        return cap_attr;
     }
     cap_attr = cap_mask;
     return cap_attr;
@@ -2194,7 +2197,7 @@ int ge2d_open(void)
     if (fd < 0) {
         E_GE2D("open %s failed!error no %d\n",FILE_NAME_GE2D,errno);
     }
-    ge2d_get_cap(fd);
+
     return fd;
 }
 
@@ -2335,21 +2338,21 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
                 if ((is_no_alpha(pge2dinfo->src_info[0].format))
                     || (is_no_alpha(pge2dinfo->src_info[1].format))
                     || (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_NON)) {
-                    if (b_src_swap)
-                        ret = ge2d_blend_noalpha(fd,&(pge2dinfo->src_info[1].rect),
+                    if (pge2dinfo->b_src_swap)
+                        ret = ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
                             &(pge2dinfo->src_info[0].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                     else
-                        ret = ge2d_blend_noalpha(fd,&(pge2dinfo->src_info[0].rect),
+                        ret = ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
                             &(pge2dinfo->src_info[1].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                 } else {
-                    if (b_src_swap)
-                        ret = ge2d_blend(fd,&(pge2dinfo->src_info[1].rect),
+                    if (pge2dinfo->b_src_swap)
+                        ret = ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
                             &(pge2dinfo->src_info[0].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                     else
-                        ret = ge2d_blend(fd,&(pge2dinfo->src_info[0].rect),
+                        ret = ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
                             &(pge2dinfo->src_info[1].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                 }
@@ -2460,21 +2463,21 @@ int ge2d_process_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 if ((is_no_alpha(pge2dinfo->src_info[0].format))
                     || (is_no_alpha(pge2dinfo->src_info[1].format))
                     || (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_NON)) {
-                    if (b_src_swap)
-                        ret = ge2d_blend_noalpha(fd,&(pge2dinfo->src_info[1].rect),
+                    if (pge2dinfo->b_src_swap)
+                        ret = ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
                             &(pge2dinfo->src_info[0].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                     else
-                        ret = ge2d_blend_noalpha(fd,&(pge2dinfo->src_info[0].rect),
+                        ret = ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
                             &(pge2dinfo->src_info[1].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                 } else {
-                    if (b_src_swap)
-                        ret = ge2d_blend(fd,&(pge2dinfo->src_info[1].rect),
+                    if (pge2dinfo->b_src_swap)
+                        ret = ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
                             &(pge2dinfo->src_info[0].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                     else
-                        ret = ge2d_blend(fd,&(pge2dinfo->src_info[0].rect),
+                        ret = ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
                             &(pge2dinfo->src_info[1].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                 }

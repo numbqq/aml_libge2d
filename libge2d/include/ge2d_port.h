@@ -121,6 +121,7 @@ typedef struct buffer_info {
 } buffer_info_t;
 
 typedef struct aml_ge2d_info {
+    int fd;
     unsigned int offset;
     unsigned int blend_mode;
     GE2DOP ge2d_op;
@@ -130,6 +131,8 @@ typedef struct aml_ge2d_info {
     unsigned int gl_alpha;
     unsigned int const_color;
     unsigned int dst_plane_cnt;
+    int cap_attr;
+    int b_src_swap;
     unsigned int reserved;
 } aml_ge2d_info_t;
 

@@ -56,7 +56,6 @@ static int src1_layer_mode = 0;
 static int src2_layer_mode = 0;
 static int gb1_alpha = 0xff;
 static int gb2_alpha = 0xff;
-static int cap_attr;
 aml_ge2d_t amlge2d;
 
 static void set_ge2dinfo(aml_ge2d_info_t *pge2dinfo)
@@ -407,7 +406,7 @@ static int do_blend(aml_ge2d_info_t *pge2dinfo)
     unsigned long offset_bakup = 0;
     printf("do_blend test case:\n");
 
-    if (cap_attr == 0x1) {
+    if (pge2dinfo->cap_attr == 0x1) {
         /* do blend src1 blend src2(dst) to dst */
         printf("one step blend\n");
         ret = aml_read_file_src1(SRC1_FILE_NAME,pge2dinfo);
@@ -905,17 +904,16 @@ int main(int argc, char **argv)
     memset(&(amlge2d.ge2dinfo.src_info[0]), 0, sizeof(buffer_info_t));
     memset(&(amlge2d.ge2dinfo.src_info[1]), 0, sizeof(buffer_info_t));
     memset(&(amlge2d.ge2dinfo.dst_info), 0, sizeof(buffer_info_t));
-    cap_attr = 0;
+
     ret = parse_command_line(argc,argv);
     if (ret == ge2d_fail)
         return ge2d_success;
 
     set_ge2dinfo(&amlge2d.ge2dinfo);
 
-    ret = aml_ge2d_init();
+    ret = aml_ge2d_init(&amlge2d);
     if (ret < 0)
         return ge2d_fail;
-    cap_attr = aml_ge2d_get_cap();
 
     ret = aml_ge2d_mem_alloc(&amlge2d);
     if (ret < 0)
@@ -945,11 +943,11 @@ int main(int argc, char **argv)
             E_GE2D("not support ge2d op,exit test!\n");
             break;
     }
-	if (ret < 0)
-		goto exit;
+    if (ret < 0)
+        goto exit;
     ret = aml_write_file(DST_FILE_NAME,&amlge2d.ge2dinfo);
-	if (ret < 0)
-		goto exit;
+    if (ret < 0)
+        goto exit;
 exit:
     if (amlge2d.src_data) {
         free(amlge2d.src_data);
@@ -964,7 +962,7 @@ exit:
         amlge2d.dst_data = NULL;
     }
     aml_ge2d_mem_free(&amlge2d);
-    aml_ge2d_exit();
+    aml_ge2d_exit(&amlge2d);
     printf("ge2d feature_test exit!!!\n");
     return ge2d_success;
 }
