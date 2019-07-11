@@ -5,15 +5,16 @@
 CFLAGS += -I./libge2d/include/
 CFLAGS += -I./libge2d/kernel-headers/linux/
 LIBDIR:= ./libge2d
-SRC  := $(wildcard *.c)
-TEST := ge2d_feature_test
+FEATURE_TEST := ge2d_feature_test
+CHIP_CHECK := ge2d_chip_check
 
 .PHONY : clean all
 
 all:
 	$(MAKE) -C $(LIBDIR)
-	$(CC) $(CFLAGS) $(SRC) -L$(LIBDIR) -lge2d -o $(TEST)
+	$(CC) $(CFLAGS) -L$(LIBDIR) -lge2d $(addsuffix .c,$(FEATURE_TEST)) -o $(FEATURE_TEST)
+	$(CC) $(CFLAGS) -L$(LIBDIR) -lge2d $(addsuffix .c,$(CHIP_CHECK)) -o $(CHIP_CHECK)
 
 clean:
 	rm -f $(LIBDIR)/libge2d.so
-	rm -f $(TEST)
+	rm -f $(FEATURE_TEST) $(CHIP_CHECK)
