@@ -57,6 +57,16 @@ static int src2_layer_mode = 0;
 static int gb1_alpha = 0xff;
 static int gb2_alpha = 0xff;
 aml_ge2d_t amlge2d;
+static int num_process = 1;
+
+static inline unsigned long myclock()
+{
+     struct timeval tv;
+
+     gettimeofday (&tv, NULL);
+
+     return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
 
 static void set_ge2dinfo(aml_ge2d_info_t *pge2dinfo)
 {
@@ -137,6 +147,7 @@ static void print_usage(void)
     printf ("  --gb2 <gb2_alpha>                                 define src2 global alpha.\n");
     printf ("  --strechblit <x0_y0_w_h-x1_y1_w1_h1>              define strechblit info.\n");
     printf ("  --fillrect <color_x_y_w_h>                        define fillrect info, color in rgba format.\n");
+    printf ("  --n <num>                                         process num times.\n");
     printf ("  --help                                            Print usage information.\n");
     printf ("\n");
 }
@@ -260,6 +271,10 @@ static int parse_command_line(int argc, char *argv[])
                 sscanf (argv[i], "%d", &src2_canvas_alloc) == 1) {
                 continue;
             }
+            else if (strcmp (argv[i] + 2, "n") == 0 && ++i < argc &&
+                sscanf (argv[i], "%d", &num_process) == 1) {
+                continue;
+            }
         }
     }
     return ge2d_success;
@@ -375,6 +390,8 @@ static int do_fill_rectangle(aml_ge2d_info_t *pge2dinfo)
 {
     int ret = -1;
     char code;
+    int i;
+    unsigned long stime;
 
     printf("do_fill_rectangle test case:\n");
 
@@ -383,7 +400,10 @@ static int do_fill_rectangle(aml_ge2d_info_t *pge2dinfo)
     pge2dinfo->dst_info.rect.y = dst_rect_x;
     pge2dinfo->dst_info.rect.w = dst_rect_w;
     pge2dinfo->dst_info.rect.h = dst_rect_h;
-    ret = aml_ge2d_process(pge2dinfo);
+    stime = myclock();
+    for (i = 0; i < num_process; i++)
+        ret = aml_ge2d_process(pge2dinfo);
+    printf("time=%ld ms\n", myclock() - stime);
     #if 0
     sleep(5);
 
@@ -404,6 +424,9 @@ static int do_blend(aml_ge2d_info_t *pge2dinfo)
     char code = 0;
     int shared_fd_bakup;
     unsigned long offset_bakup = 0;
+    int i;
+    unsigned long stime;
+
     printf("do_blend test case:\n");
 
     if (pge2dinfo->cap_attr == 0x1) {
@@ -440,7 +463,10 @@ static int do_blend(aml_ge2d_info_t *pge2dinfo)
         pge2dinfo->src_info[1].layer_mode = src2_layer_mode;
         pge2dinfo->src_info[0].plane_alpha = gb1_alpha;
         pge2dinfo->src_info[1].plane_alpha = gb2_alpha;
-        ret = aml_ge2d_process(pge2dinfo);
+        stime = myclock();
+        for (i = 0; i < num_process; i++)
+            ret = aml_ge2d_process(pge2dinfo);
+        printf("time=%ld ms\n", myclock() - stime);
     } else {
         if (((gb1_alpha != 0xff)
         && (gb2_alpha != 0xff))){
@@ -822,6 +848,8 @@ static int do_strechblit(aml_ge2d_info_t *pge2dinfo)
 {
     int ret = -1;
     char code = 0;
+    int i;
+    unsigned long stime;
     printf("do_strechblit test case:\n");
     ret = aml_read_file_src1(SRC1_FILE_NAME,pge2dinfo);
     if (ret < 0)
@@ -839,7 +867,10 @@ static int do_strechblit(aml_ge2d_info_t *pge2dinfo)
     pge2dinfo->src_info[0].layer_mode = src1_layer_mode;
     pge2dinfo->src_info[0].plane_alpha = gb1_alpha;
 
-    ret = aml_ge2d_process(pge2dinfo);
+    stime = myclock();
+    for (i = 0; i < num_process; i++)
+        ret = aml_ge2d_process(pge2dinfo);
+    printf("time=%ld ms\n", myclock() - stime);
     #if 0
     sleep(5);
 
@@ -858,6 +889,8 @@ static int do_blit(aml_ge2d_info_t *pge2dinfo)
 {
     int ret = -1;
     char code = 0;
+    int i;
+    unsigned long stime;
     printf("do_blit test case:\n");
     ret = aml_read_file_src1(SRC1_FILE_NAME,pge2dinfo);
     if (ret < 0)
@@ -874,7 +907,10 @@ static int do_blit(aml_ge2d_info_t *pge2dinfo)
     pge2dinfo->src_info[0].layer_mode = src1_layer_mode;
     pge2dinfo->src_info[0].plane_alpha = gb1_alpha;
 
-    ret = aml_ge2d_process(pge2dinfo);
+    stime = myclock();
+    for (i = 0; i < num_process; i++)
+        ret = aml_ge2d_process(pge2dinfo);
+    printf("time=%ld ms\n", myclock() - stime);
     #if 0
     sleep(5);
 
