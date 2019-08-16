@@ -95,7 +95,7 @@ static int parse_command_line(int argc, char *argv[])
     return ge2d_success;
 }
 
-int compare_data(char *data1, char *data2, int size)
+static int compare_data(char *data1, char *data2, int size)
 {
     int i = 0, err_hit = 0;
     int thresh_hold = 1;//size * 5/100;
@@ -117,7 +117,7 @@ int compare_data(char *data1, char *data2, int size)
     return 0;
 }
 
-int load_result_file(const char* url)
+static int load_result_file(const char* url)
 {
     int fd = -1;
     int length = 0;
@@ -148,7 +148,7 @@ int load_result_file(const char* url)
 }
 
 
-int aml_read_file_src1(const char* url , aml_ge2d_info_t *pge2dinfo)
+static int aml_read_file_src1(const char* url , aml_ge2d_info_t *pge2dinfo)
 {
     int fd = -1;
     int length = 0;
@@ -191,7 +191,7 @@ int aml_read_file_src1(const char* url , aml_ge2d_info_t *pge2dinfo)
     return ge2d_success;
 }
 
-int aml_read_file_src2(const char* url , aml_ge2d_info_t *pge2dinfo)
+static int aml_read_file_src2(const char* url , aml_ge2d_info_t *pge2dinfo)
 {
     int fd = -1;
     int length = 0;
@@ -223,7 +223,7 @@ int aml_read_file_src2(const char* url , aml_ge2d_info_t *pge2dinfo)
 }
 
 #ifdef DUMP_OUTPUT
-int aml_write_file(const char* url , aml_ge2d_info_t *pge2dinfo)
+static int aml_write_file(const char* url , aml_ge2d_info_t *pge2dinfo)
 {
     int fd = -1;
     int length = 0;

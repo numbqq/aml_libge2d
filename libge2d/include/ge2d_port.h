@@ -121,7 +121,8 @@ typedef struct buffer_info {
 } buffer_info_t;
 
 typedef struct aml_ge2d_info {
-    int fd;
+    int ge2d_fd;     /* ge2d_fd */
+    int ion_fd; /* ion_fd */
     unsigned int offset;
     unsigned int blend_mode;
     GE2DOP ge2d_op;

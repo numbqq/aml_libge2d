@@ -24,10 +24,8 @@
 #include "kernel-headers/linux/ge2d.h"
 
 #define PAGE_ALIGN(x)        (((x) + 4095) & ~4095)
-static int ge2d_fd = -1;
-static int ref_count = 0;
 
-static int ge2d_alloc_dma_buffer(int fd, unsigned int dir, unsigned int len)
+static int ge2d_alloc_dma_buffer(int ge2d_fd, unsigned int dir, unsigned int len)
 {
     int ret = -1;
     struct ge2d_dmabuf_req_s buf_cfg;
@@ -37,16 +35,16 @@ static int ge2d_alloc_dma_buffer(int fd, unsigned int dir, unsigned int len)
     buf_cfg.dma_dir = dir;
     buf_cfg.len = len;
 
-    ret = ioctl(fd, GE2D_REQUEST_BUFF, &buf_cfg);
+    ret = ioctl(ge2d_fd, GE2D_REQUEST_BUFF, &buf_cfg);
     if (ret < 0) {
-        printf("%s failed: %s\n", __func__, strerror(ret));
+        E_GE2D("%s failed: %s\n", __func__, strerror(ret));
         return ret;
     }
-    printf("dma buffer alloc, index=%d\n", buf_cfg.index);
+    E_GE2D("dma buffer alloc, index=%d\n", buf_cfg.index);
     return buf_cfg.index;
 }
 
-static int ge2d_get_dma_buffer_fd(int fd, int index)
+static int ge2d_get_dma_buffer_fd(int ge2d_fd, int index)
 {
     struct ge2d_dmabuf_exp_s ex_buf;
 
@@ -54,8 +52,8 @@ static int ge2d_get_dma_buffer_fd(int fd, int index)
     ex_buf.flags = O_RDWR;
     ex_buf.fd = -1;
 
-    if (ioctl(fd, GE2D_EXP_BUFF, &ex_buf))  {
-        printf("failed get dma buf fd\n");
+    if (ioctl(ge2d_fd, GE2D_EXP_BUFF, &ex_buf))  {
+        E_GE2D("failed get dma buf fd\n");
         return -1;
     }
     printf("dma buffer export, fd=%d\n", ex_buf.fd);
@@ -63,45 +61,19 @@ static int ge2d_get_dma_buffer_fd(int fd, int index)
     return ex_buf.fd;
 }
 
-static int ge2d_free_dma_buffer(int fd, int index)
+static int ge2d_free_dma_buffer(int ge2d_fd, int index)
 {
-    if (ioctl(fd, GE2D_FREE_BUFF, &index))  {
-        printf("failed free dma buf fd\n");
+    if (ioctl(ge2d_fd, GE2D_FREE_BUFF, &index))  {
+        E_GE2D("failed free dma buf fd\n");
         return -1;
     }
     return 0;
 }
 
-int dmabuf_init(void)
-{
-    if (ge2d_fd >= 0) {
-        ref_count++;
-        printf("init: /dev/ge2d already opened, incremented ref_count %d\n",
-            ref_count);
-        return ge2d_fd;
-    }
-    ge2d_fd = ge2d_open();
-    if (ge2d_fd < 0) {
-        printf("init: Failed to open /dev/ge2d: '%s'\n", strerror(errno));
-        return -1;
-    }
-    ref_count++;
-    return ge2d_fd;
-}
-
-void dmabuf_exit(void)
-{
-    ref_count--;
-    if (ref_count == 0) {
-        ge2d_close(ge2d_fd);
-        ge2d_fd = -1;
-    }
-}
-
-int dmabuf_alloc(int type, unsigned int len)
+int dmabuf_alloc(int ge2d_fd, int type, unsigned int len)
 {
     int index = -1;
-    int fd = -1, dma_fd = -1;
+    int dma_fd = -1;
     unsigned int dir;
 
     /* alloc dma*/
@@ -109,34 +81,34 @@ int dmabuf_alloc(int type, unsigned int len)
         dir = DMA_FROM_DEVICE;
     else
         dir = DMA_TO_DEVICE;
-    fd = ge2d_fd;
-    index = ge2d_alloc_dma_buffer(fd, dir, len);
+
+    index = ge2d_alloc_dma_buffer(ge2d_fd, dir, len);
     if (index < 0)
         return -1;
 
     /* get  dma fd*/
-    dma_fd = ge2d_get_dma_buffer_fd(fd, index);
+    dma_fd = ge2d_get_dma_buffer_fd(ge2d_fd, index);
     if (dma_fd < 0)
     return -1;
     /* after alloc, dmabuffer free can be called, it just dec refcount */
-    ge2d_free_dma_buffer(fd, index);
+    ge2d_free_dma_buffer(ge2d_fd, index);
 
     return dma_fd;
 }
 
-int dmabuf_sync_for_device(int dma_fd)
+int dmabuf_sync_for_device(int ge2d_fd, int dma_fd)
 {
     if (ioctl(ge2d_fd, GE2D_SYNC_DEVICE, &dma_fd))  {
-        printf("failed GE2D_SYNC_DEVICE\n");
+        E_GE2D("failed GE2D_SYNC_DEVICE\n");
         return -1;
     }
     return 0;
 }
 
-int dmabuf_sync_for_cpu(int dma_fd)
+int dmabuf_sync_for_cpu(int ge2d_fd, int dma_fd)
 {
     if (ioctl(ge2d_fd, GE2D_SYNC_CPU, &dma_fd))  {
-        printf("failed GE2D_SYNC_CPU\n");
+        E_GE2D("failed GE2D_SYNC_CPU\n");
         return -1;
     }
     return 0;

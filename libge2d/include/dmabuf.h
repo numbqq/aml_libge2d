@@ -19,11 +19,10 @@ enum {
     GE2D_BUF_OUTPUT,
 };
 
-int dmabuf_init(void);
-void dmabuf_exit(void);
-int dmabuf_alloc(int type, unsigned int len);
-int dmabuf_sync_for_device(int dma_fd);
-int dmabuf_sync_for_cpu(int dma_fd);
+void dmabuf_exit(int ge2d_fd);
+int dmabuf_alloc(int ge2d_fd, int type, unsigned int len);
+int dmabuf_sync_for_device(int ge2d_fd, int dma_fd);
+int dmabuf_sync_for_cpu(int ge2d_fd, int dma_fd);
 #if defined (__cplusplus)
 }
 #endif

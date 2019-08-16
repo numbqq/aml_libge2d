@@ -2198,6 +2198,8 @@ int ge2d_open(void)
         E_GE2D("open %s failed!error no %d\n",FILE_NAME_GE2D,errno);
     }
 
+    D_GE2D("%s, ge2d_fd = %d\n", __func__, fd);
+
     return fd;
 }
 
@@ -2237,7 +2239,7 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
             if (pge2dinfo->dst_info.mem_alloc_type == AML_GE2D_MEM_DMABUF) {
                 dma_fd = pge2dinfo->dst_info.shared_fd;
             if (dma_fd > 0)
-                    dmabuf_sync_for_cpu(dma_fd);
+                    dmabuf_sync_for_cpu(pge2dinfo->ge2d_fd, dma_fd);
             }
             break;
         case AML_GE2D_BLIT:
@@ -2252,7 +2254,7 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
             if (pge2dinfo->src_info[0].mem_alloc_type == AML_GE2D_MEM_DMABUF) {
                 dma_fd = pge2dinfo->src_info[0].shared_fd;
                 if (dma_fd > 0)
-                    dmabuf_sync_for_device(dma_fd);
+                    dmabuf_sync_for_device(pge2dinfo->ge2d_fd, dma_fd);
             }
             for (i = 0; i < plane_number; i++) {
                 pge2dinfo->dst_plane_cnt = i;
@@ -2267,7 +2269,7 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
             if (pge2dinfo->dst_info.mem_alloc_type == AML_GE2D_MEM_DMABUF) {
                 dma_fd = pge2dinfo->dst_info.shared_fd;
                 if (dma_fd > 0)
-                    dmabuf_sync_for_cpu(dma_fd);
+                    dmabuf_sync_for_cpu(pge2dinfo->ge2d_fd, dma_fd);
             }
             break;
         case AML_GE2D_STRETCHBLIT:
@@ -2282,7 +2284,7 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
             if (pge2dinfo->src_info[0].mem_alloc_type == AML_GE2D_MEM_DMABUF) {
                 dma_fd = pge2dinfo->src_info[0].shared_fd;
                 if (dma_fd > 0)
-                    dmabuf_sync_for_device(dma_fd);
+                    dmabuf_sync_for_device(pge2dinfo->ge2d_fd, dma_fd);
             }
             for (i = 0; i < plane_number; i++) {
                 pge2dinfo->dst_plane_cnt = i;
@@ -2299,7 +2301,7 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
             if (pge2dinfo->dst_info.mem_alloc_type == AML_GE2D_MEM_DMABUF) {
                 dma_fd = pge2dinfo->dst_info.shared_fd;
                 if (dma_fd > 0)
-                    dmabuf_sync_for_cpu(dma_fd);
+                    dmabuf_sync_for_cpu(pge2dinfo->ge2d_fd, dma_fd);
             }
             break;
         case AML_GE2D_BLEND:
@@ -2326,12 +2328,12 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
             if (pge2dinfo->src_info[0].mem_alloc_type == AML_GE2D_MEM_DMABUF) {
                 dma_fd = pge2dinfo->src_info[0].shared_fd;
                 if (dma_fd > 0)
-                    dmabuf_sync_for_device(dma_fd);
+                    dmabuf_sync_for_device(pge2dinfo->ge2d_fd, dma_fd);
             }
             if (pge2dinfo->src_info[1].mem_alloc_type == AML_GE2D_MEM_DMABUF) {
                 dma_fd = pge2dinfo->src_info[1].shared_fd;
                 if (dma_fd > 0)
-                    dmabuf_sync_for_device(dma_fd);
+                    dmabuf_sync_for_device(pge2dinfo->ge2d_fd, dma_fd);
             }
             ret = ge2d_blend_config_ex(fd,pge2dinfo);
             if (ret == ge2d_success) {
@@ -2360,7 +2362,7 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
             if (pge2dinfo->dst_info.mem_alloc_type == AML_GE2D_MEM_DMABUF) {
                 dma_fd = pge2dinfo->dst_info.shared_fd;
                 if (dma_fd > 0)
-                    dmabuf_sync_for_cpu(dma_fd);
+                    dmabuf_sync_for_cpu(pge2dinfo->ge2d_fd, dma_fd);
             }
             break;
         default:

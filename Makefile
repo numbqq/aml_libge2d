@@ -12,8 +12,8 @@ CHIP_CHECK := ge2d_chip_check
 
 all:
 	$(MAKE) -C $(LIBDIR)
-	$(CC) $(CFLAGS) -L$(LIBDIR) -lge2d $(addsuffix .c,$(FEATURE_TEST)) -o $(FEATURE_TEST)
-	$(CC) $(CFLAGS) -L$(LIBDIR) -lge2d $(addsuffix .c,$(CHIP_CHECK)) -o $(CHIP_CHECK)
+	$(CC) $(CFLAGS) -L$(LIBDIR) -lpthread -lge2d $(addsuffix .c,$(FEATURE_TEST)) -o $(FEATURE_TEST)
+	$(CC) $(CFLAGS) -L$(LIBDIR) -lpthread -lge2d $(addsuffix .c,$(CHIP_CHECK)) -o $(CHIP_CHECK)
 
 clean:
 	rm -f $(LIBDIR)/libge2d.so
