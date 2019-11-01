@@ -19,7 +19,6 @@ enum {
     GE2D_BUF_OUTPUT,
 };
 
-void dmabuf_exit(int ge2d_fd);
 int dmabuf_alloc(int ge2d_fd, int type, unsigned int len);
 int dmabuf_sync_for_device(int ge2d_fd, int dma_fd);
 int dmabuf_sync_for_cpu(int ge2d_fd, int dma_fd);

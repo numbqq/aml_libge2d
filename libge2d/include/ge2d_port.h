@@ -29,6 +29,7 @@
 extern "C" {
 #endif
 
+#define MAX_PLANE  4
 typedef enum {
     GE2D_CANVAS_OSD0 = 0,
     GE2D_CANVAS_OSD1,
@@ -106,18 +107,19 @@ typedef struct{
 typedef struct buffer_info {
     unsigned int mem_alloc_type;
     unsigned int memtype;
-    char* vaddr;
-    unsigned long offset;
+    char* vaddr[MAX_PLANE];
+    unsigned long offset[MAX_PLANE];
     unsigned int canvas_w;
     unsigned int canvas_h;
     rectangle_t rect;
     int format;
     unsigned int rotation;
-    int shared_fd;
+    int shared_fd[MAX_PLANE];
     unsigned char plane_alpha;
     unsigned char layer_mode;
     unsigned char fill_color_en;
     unsigned int  def_color;
+    int plane_number;
 } buffer_info_t;
 
 typedef struct aml_ge2d_info {
@@ -131,7 +133,8 @@ typedef struct aml_ge2d_info {
     unsigned int color;
     unsigned int gl_alpha;
     unsigned int const_color;
-    unsigned int dst_plane_cnt;
+    /* means do multi ge2d op */
+    unsigned int dst_op_cnt;
     int cap_attr;
     int b_src_swap;
     unsigned int reserved;

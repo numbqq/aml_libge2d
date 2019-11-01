@@ -18,15 +18,15 @@ extern "C" {
 
 typedef struct aml_ge2d {
     aml_ge2d_info_t ge2dinfo;
-    char *src_data;
-    char *src2_data;
-    char *dst_data;
-    unsigned int src_size;
-    unsigned int src2_size;
-    unsigned int dst_size;
-    void *cmemParm_src;
-    void *cmemParm_src2;
-    void *cmemParm_dst;
+    char *src_data[MAX_PLANE];
+    char *src2_data[MAX_PLANE];
+    char *dst_data[MAX_PLANE];
+    unsigned int src_size[MAX_PLANE];
+    unsigned int src2_size[MAX_PLANE];
+    unsigned int dst_size[MAX_PLANE];
+    void *cmemParm_src[MAX_PLANE];
+    void *cmemParm_src2[MAX_PLANE];
+    void *cmemParm_dst[MAX_PLANE];
 } aml_ge2d_t;
 
 int aml_ge2d_init(aml_ge2d_t *pge2d);

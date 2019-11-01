@@ -22,7 +22,7 @@ typedef struct aml_ge2d_info {
     unsigned int color;
     unsigned int gl_alpha;
     unsigned int const_color;
-    unsigned int dst_plane_cnt;
+    unsigned int dst_op_cnt;
     unsigned int reserved;
 } aml_ge2d_info_t;
 
@@ -102,18 +102,18 @@ ge2d_load_test provide ge2d loading test.
 	--src1_memtype <0: ion, 1: dmabuf>                define memory alloc type.
 	--src2_memtype <0: ion, 1: dmabuf>                define memory alloc type.
 	--dst_memtype <0: ion, 1: dmabuf>                 define memory alloc type.
-	--src1_format  <num>                               define src1 format.
+	--src1_format  <num>                              define src1 format.
 	--src2_format <num>                               define src2 format.
 	--dst_format  <num>                               define dst format.
-	--src1_size  <WxH>                                 define src1 size.
+	--src1_size  <WxH>                                define src1 size.
 	--src2_size <WxH>                                 define src2 size.
 	--dst_size  <WxH>                                 define dst size.
-	--src1_file  <name>                                define src1 file.
+	--src1_file  <name>                               define src1 file.
 	--src2_file <name>                                define src2 file.
 	--dst_file  <name>                                define dst file.
-	--src1_canvas_alloc  <num>                         define whether src1 need alloc mem   0:GE2D_CANVAS_OSD0 1:GE2D_CANVAS_ALLOC.
+	--src1_canvas_alloc  <num>                        define whether src1 need alloc mem   0:GE2D_CANVAS_OSD0 1:GE2D_CANVAS_ALLOC.
 	--src2_canvas_alloc <num>                         defien whether src2 need alloc mem  0:GE2D_CANVAS_OSD0 1:GE2D_CANVAS_ALLOC.
-	--src1_rect  <x_y_w_h>                             define src1 rect.
+	--src1_rect  <x_y_w_h>                            define src1 rect.
 	--src2_rect <x_y_w_h>                             define src2 rect.
 	--dst_rect  <x_y_w_h>                             define dst rect.
 	--bo1 <layer_mode_num>                            define src1_layer_mode.
@@ -122,6 +122,9 @@ ge2d_load_test provide ge2d loading test.
 	--gb2 <gb2_alpha>                                 define src2 global alpha.
 	--strechblit <x0_y0_w_h-x1_y1_w1_h1>              define strechblit info.
 	--fillrect <color_x_y_w_h>                        define fillrect info, color in rgba format.
+	--src2_planenumber <num>                          define src2 plane number.
+	--src1_planenumber <num>                          define src1 plane number.
+	--dst_planenumber <num>                           define dst plane number.
 	--help                                            Print usage information.
 note: tester can change memtype to GE2D_CANVAS_ALLOC/GE2D_CANVAS_OSD0/GE2D_CANVAS_OSD1 as your requirement
       if src1 memtype is GE2D_CANVAS_ALLOC, it can read data from file via aml_read_file.
@@ -133,18 +136,18 @@ note: tester can change memtype to GE2D_CANVAS_ALLOC/GE2D_CANVAS_OSD0/GE2D_CANVA
 
 ge2d_feature_test provide ge2d operation example.
 //src used ion alloc, dst used osd
-./ge2d_feature_test --op 2 --src1_memtype 0 --dst_memtype 0 --size 1920x1080 --src_format 1 --dst_format 1 --src_file 1080P_RGBA8888.rgb32
+./ge2d_feature_test --op 2 --src1_memtype 0 --dst_memtype 0 --size 1920x1080 --src1_format 1 --dst_format 1 --src1_file 1080P_RGBA8888.rgb32
 //src used dma_buf alloc, dst used osd
-./ge2d_feature_test --op 2 --src1_memtype 1 --dst_memtype 1 --size 1920x1080 --src_format 1 --dst_format 1 --src_file 1080P_RGBA8888.rgb32
+./ge2d_feature_test --op 2 --src1_memtype 1 --dst_memtype 1 --size 1920x1080 --src1_format 1 --dst_format 1 --src1_file 1080P_RGBA8888.rgb32
 
 //src used ion alloc, dst used dma_buf alloc
-./ge2d_feature_test --op 2 --src1_memtype 0 --dst_memtype 1 --size 1920x1080 --src_format 1 --dst_format 1 --src_file 1080P_RGBA8888.rgb32 --dst_file out_dma.rgb32
+./ge2d_feature_test --op 2 --src1_memtype 0 --dst_memtype 1 --size 1920x1080 --src1_format 1 --dst_format 1 --src1_file 1080P_RGBA8888.rgb32 --dst_file out_dma.rgb32
 
 //src used dma_buf alloc, dst used ion alloc
-./ge2d_feature_test --op 2 --src1_memtype 1 --dst_memtype 0 --size 1920x1080 --src_format 1 --dst_format 1 --src_file 1080P_RGBA8888.rgb32 --dst_file out_ion.rgb32
+./ge2d_feature_test --op 2 --src1_memtype 1 --dst_memtype 0 --size 1920x1080 --src1_format 1 --dst_format 1 --src1_file 1080P_RGBA8888.rgb32 --dst_file out_ion.rgb32
 
 //src used dma_buf alloc, dst used dma_buf alloc
-./ge2d_feature_test --op 2 --src1_memtype 1 --dst_memtype 1--size 1920x1080 --src_format 1 --dst_format 1 --src_file 1080P_RGBA8888.rgb32 --dst_file out_ion.rgb32
+./ge2d_feature_test --op 2 --src1_memtype 1 --dst_memtype 1--size 1920x1080 --src1_format 1 --dst_format 1 --src1_file 1080P_RGBA8888.rgb32 --dst_file out_ion.rgb32
 
 
 
@@ -173,13 +176,17 @@ if dma buffer is allocated by ge2d, please add content blow in DTS:
 
 usage examples:
 fillrect ---
-./ge2d_feature_test --op 0 --dst_size 1920x1080 --src1_format 1 --dst_format 1 --fillrect 0x00ff00ff_50_50_100_100 --dst_file tmp/11fillrect.rgb32
+./ge2d_feature_test --op 0 --dst_size 1920x1080 --src1_format 1 --dst_format 1 --fillrect 0x00ff00ff_50_50_100_100 --dst_file fillrect.rgb32
 
 blend ---
-./ge2d_feature_test --op 1 --dst_size 1920x1080 --dst_rect 100_100_400_400 --src1_size 1920x1080 --src1_rect 100_100_400_400 --src2_size 400x400 --src2_rect 0_0_400_400 --dst_format 1 --src1_format 1 --src2_format 1 --src1_file 1080P_RGBA8888.rgb32 --src2_file 400x400_RGBA8888.rgb32  --bo1 2 --bo2 2 --gb1 150 --gb2 255 --dst_file tmp/11blend.rgb32
+./ge2d_feature_test --op 1 --dst_size 1920x1080 --dst_rect 100_100_400_400 --src1_size 1920x1080 --src1_rect 100_100_400_400 --src2_size 400x400 --src2_rect 0_0_400_400 --dst_format 1 --src1_format 1 --src2_format 1 --src1_file 1080P_RGBA8888.rgb32 --src2_file 400x400_RGBA8888.rgb32  --bo1 2 --bo2 2 --gb1 150 --gb2 255 --dst_file blend.rgb32
 
 strechblit ---
-./ge2d_feature_test --op 2 --size 1920x1080 --src1_format 1 --dst_format 1 --strechblit 0_0_1920_100-50_50_200_300 --src1_file 1080P_RGBA8888.rgb32 --dst_file tmp/11strechblit.rgb32
+./ge2d_feature_test --op 2 --size 1920x1080 --src1_format 1 --dst_format 1 --strechblit 0_0_1920_100-50_50_200_300 --src1_file 1080P_RGBA8888.rgb32 --dst_file strechblit.rgb32
 
 blit ---
-./ge2d_feature_test --op 3 --size 1920x1080 --src1_format 1 --dst_format 1 --src1_rect 0_0_1920_100 --dst_rect 0_0_1920_100 --src1_file 1080P_RGBA8888.rgb32 --dst_file tmp/11blit.rgb32
+./ge2d_feature_test --op 3 --size 1920x1080 --src1_format 1 --dst_format 1 --src1_rect 0_0_1920_100 --dst_rect 0_0_1920_100 --src1_file 1080P_RGBA8888.rgb32 --dst_file blit.rgb32
+multiplane fd support:
+add options para if needed:
+--src1_planenumber 1 src2_planenumber 1 --dst_planenumber 1
+--src1_planenumber 2 src2_planenumber 2 --dst_planenumber 2

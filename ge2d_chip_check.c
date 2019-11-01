@@ -122,7 +122,7 @@ static int load_result_file(const char* url)
     int fd = -1;
     int length = 0;
     int read_num = 0;
-    if (amlge2d.src_size == 0)
+    if (amlge2d.src_size[0] == 0)
         return 0;
 
     fd = open(url,O_RDONLY );
@@ -131,13 +131,13 @@ static int load_result_file(const char* url)
         return ge2d_fail;
     }
 
-    amlge2d.src_data = (char*)malloc(amlge2d.src_size);
-    if (!amlge2d.src_data) {
+    amlge2d.src_data[0] = (char*)malloc(amlge2d.src_size[0]);
+    if (!amlge2d.src_data[0]) {
         E_GE2D("malloc for src_data failed\n");
         return ge2d_fail;
     }
 
-    read_num = read(fd,amlge2d.src_data,amlge2d.src_size);
+    read_num = read(fd,amlge2d.src_data[0],amlge2d.src_size[0]);
     if (read_num <= 0) {
         E_GE2D("read file read_num=%d error\n",read_num);
         return ge2d_fail;
@@ -153,7 +153,7 @@ static int aml_read_file_src1(const char* url , aml_ge2d_info_t *pge2dinfo)
     int fd = -1;
     int length = 0;
     int read_num = 0;
-    if (amlge2d.src_size == 0)
+    if (amlge2d.src_size[0] == 0)
         return 0;
 
     fd = open(url,O_RDONLY );
@@ -162,19 +162,19 @@ static int aml_read_file_src1(const char* url , aml_ge2d_info_t *pge2dinfo)
         return ge2d_fail;
     }
 
-    amlge2d.src_data = (char*)malloc(amlge2d.src_size);
-    if (!amlge2d.src_data) {
+    amlge2d.src_data[0] = (char*)malloc(amlge2d.src_size[0]);
+    if (!amlge2d.src_data[0]) {
         E_GE2D("malloc for src_data failed\n");
         return ge2d_fail;
     }
 
-    read_num = read(fd,amlge2d.src_data,amlge2d.src_size);
+    read_num = read(fd,amlge2d.src_data[0],amlge2d.src_size[0]);
     if (read_num <= 0) {
         E_GE2D("read file read_num=%d error\n",read_num);
         return ge2d_fail;
     }
 
-    memcpy(pge2dinfo->src_info[0].vaddr, amlge2d.src_data, amlge2d.src_size);
+    memcpy(pge2dinfo->src_info[0].vaddr, amlge2d.src_data[0], amlge2d.src_size[0]);
 #if 0
     printf("pixel: 0x%2x, 0x%2x,0x%2x,0x%2x, 0x%2x,0x%2x,0x%2x,0x%2x\n",
         pge2dinfo->src_info[0].vaddr[0],
@@ -196,7 +196,7 @@ static int aml_read_file_src2(const char* url , aml_ge2d_info_t *pge2dinfo)
     int fd = -1;
     int length = 0;
     int read_num = 0;
-    if (amlge2d.src2_size == 0)
+    if (amlge2d.src2_size[0] == 0)
         return 0;
 
     fd = open(url,O_RDONLY );
@@ -205,19 +205,19 @@ static int aml_read_file_src2(const char* url , aml_ge2d_info_t *pge2dinfo)
         return ge2d_fail;
     }
 
-    amlge2d.src2_data = (char*)malloc(amlge2d.src2_size);
-    if (!amlge2d.src2_data) {
+    amlge2d.src2_data[0] = (char*)malloc(amlge2d.src2_size[0]);
+    if (!amlge2d.src2_data[0]) {
         E_GE2D("malloc for src_data failed\n");
         return ge2d_fail;
     }
 
-    read_num = read(fd,amlge2d.src2_data,amlge2d.src2_size);
+    read_num = read(fd,amlge2d.src2_data[0],amlge2d.src2_size[0]);
     if (read_num <= 0) {
         E_GE2D("read file read_num=%d error\n",read_num);
         return ge2d_fail;
     }
 
-    memcpy(pge2dinfo->src_info[1].vaddr, amlge2d.src2_data, amlge2d.src2_size);
+    memcpy(pge2dinfo->src_info[1].vaddr[0], amlge2d.src2_data[0], amlge2d.src2_size[0]);
     close(fd);
     return ge2d_success;
 }
@@ -230,7 +230,7 @@ static int aml_write_file(const char* url , aml_ge2d_info_t *pge2dinfo)
     int write_num = 0;
     unsigned int *value;
 
-    if (amlge2d.dst_size == 0)
+    if (amlge2d.dst_size[0] == 0)
         return 0;
     if ((GE2D_CANVAS_OSD0 == pge2dinfo->dst_info.memtype)
         || (GE2D_CANVAS_OSD1 == pge2dinfo->dst_info.memtype))
@@ -242,24 +242,24 @@ static int aml_write_file(const char* url , aml_ge2d_info_t *pge2dinfo)
         return ge2d_fail;
     }
 
-    amlge2d.dst_data = (char*)malloc(amlge2d.dst_size);
-    if (!amlge2d.dst_data) {
+    amlge2d.dst_data[0] = (char*)malloc(amlge2d.dst_size[0]);
+    if (!amlge2d.dst_data[0]) {
         E_GE2D("malloc for dst_data failed\n");
         return ge2d_fail;
     }
 
-    memcpy(amlge2d.dst_data,pge2dinfo->dst_info.vaddr,amlge2d.dst_size);
+    memcpy(amlge2d.dst_data[0],pge2dinfo->dst_info.vaddr[0],amlge2d.dst_size[0]);
 
     printf("dst pixel: 0x%2x, 0x%2x,0x%2x,0x%2x, 0x%2x,0x%2x,0x%2x,0x%2x\n",
-        pge2dinfo->dst_info.vaddr[0],
-        pge2dinfo->dst_info.vaddr[1],
-        pge2dinfo->dst_info.vaddr[2],
-        pge2dinfo->dst_info.vaddr[3],
-        pge2dinfo->dst_info.vaddr[4],
-        pge2dinfo->dst_info.vaddr[5],
-        pge2dinfo->dst_info.vaddr[6],
-        pge2dinfo->dst_info.vaddr[7]);
-    write_num = write(fd,amlge2d.dst_data,amlge2d.dst_size);
+        pge2dinfo->dst_info.vaddr[0][0],
+        pge2dinfo->dst_info.vaddr[0][1],
+        pge2dinfo->dst_info.vaddr[0][2],
+        pge2dinfo->dst_info.vaddr[0][3],
+        pge2dinfo->dst_info.vaddr[0][4],
+        pge2dinfo->dst_info.vaddr[0][5],
+        pge2dinfo->dst_info.vaddr[0][6],
+        pge2dinfo->dst_info.vaddr[0][7]);
+    write_num = write(fd,amlge2d.dst_data[0],amlge2d.dst_size[0]);
     if (write_num <= 0) {
         E_GE2D("read file read_num=%d error\n",write_num);
     }
@@ -360,9 +360,9 @@ static inline unsigned long myclock()
 
 int aml_generate_src1(char *src, aml_ge2d_info_t *pge2dinfo)
 {
-    if (amlge2d.src_size == 0)
+    if (amlge2d.src_size[0] == 0)
         return 0;
-    memcpy(pge2dinfo->src_info[0].vaddr, src, amlge2d.src_size);
+    memcpy(pge2dinfo->src_info[0].vaddr[0], src, amlge2d.src_size[0]);
     return ge2d_success;
 }
 
@@ -370,14 +370,14 @@ int aml_generate_src2(int color, aml_ge2d_info_t *pge2dinfo)
 {
     int i = 0;
 
-    if (amlge2d.src2_size == 0)
+    if (amlge2d.src2_size[0] == 0)
         return 0;
 
-    for (i=0;i<amlge2d.src2_size;) {
-        pge2dinfo->src_info[1].vaddr[i] = color & 0xff;
-        pge2dinfo->src_info[1].vaddr[i+1] = (color & 0xff00)>>8;
-        pge2dinfo->src_info[1].vaddr[i+2] = (color & 0xff0000)>>16;
-        pge2dinfo->src_info[1].vaddr[i+3] = (color & 0xff000000)>>24;
+    for (i=0; i<amlge2d.src2_size[0]; ) {
+        pge2dinfo->src_info[1].vaddr[0][i] = color & 0xff;
+        pge2dinfo->src_info[1].vaddr[0][i+1] = (color & 0xff00)>>8;
+        pge2dinfo->src_info[1].vaddr[0][i+2] = (color & 0xff0000)>>16;
+        pge2dinfo->src_info[1].vaddr[0][i+3] = (color & 0xff000000)>>24;
         i+=4;
     }
     return ge2d_success;
@@ -422,7 +422,7 @@ int main(int argc, char **argv)
         if (ret < 0) {
             printf("aml_ge2d_invalid_cache err\n");
         }
-        ret = compare_data((char *)color_bar_rotate, amlge2d.ge2dinfo.dst_info.vaddr, amlge2d.dst_size);
+        ret = compare_data((char *)color_bar_rotate, amlge2d.ge2dinfo.dst_info.vaddr[0], amlge2d.dst_size[0]);
         if (ret < 0) {
             err_cnt++;
             printf("GE2D: strechbilt + rotate 180 [FAILED]\n");
@@ -445,7 +445,7 @@ int main(int argc, char **argv)
         if (ret < 0) {
             printf("aml_ge2d_invalid_cache err\n");
         }
-        ret = compare_data((char *)color_bar_blend, amlge2d.ge2dinfo.dst_info.vaddr, amlge2d.dst_size);
+        ret = compare_data((char *)color_bar_blend, amlge2d.ge2dinfo.dst_info.vaddr[0], amlge2d.dst_size[0]);
         if (ret < 0) {
             err_cnt++;
             printf("GE2D: blend [FAILED]\n");
@@ -465,17 +465,17 @@ int main(int argc, char **argv)
         printf("===ge2d_slt_test:pass===\n");
 
 exit:
-    if (amlge2d.src_data) {
-        free(amlge2d.src_data);
-        amlge2d.src_data = NULL;
+    if (amlge2d.src_data[0]) {
+        free(amlge2d.src_data[0]);
+        amlge2d.src_data[0] = NULL;
     }
-    if (amlge2d.src2_data) {
-        free(amlge2d.src2_data);
-        amlge2d.src2_data = NULL;
+    if (amlge2d.src2_data[0]) {
+        free(amlge2d.src2_data[0]);
+        amlge2d.src2_data[0] = NULL;
     }
-    if (amlge2d.dst_data) {
-        free(amlge2d.dst_data);
-        amlge2d.dst_data = NULL;
+    if (amlge2d.dst_data[0]) {
+        free(amlge2d.dst_data[0]);
+        amlge2d.dst_data[0] = NULL;
     }
     aml_ge2d_mem_free(&amlge2d);
     aml_ge2d_exit(&amlge2d);
