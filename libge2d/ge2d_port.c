@@ -287,7 +287,6 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
             break;
     }
 
-
     if (CANVAS_ALLOC == output_buffer_info->memtype) {
         if (is_one_plane == 1) {
             ge2d_config_ex.dst_planes[0].addr = output_buffer_info->offset[0];
@@ -834,11 +833,21 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
     ge2d_config_ex.src_para.color = input_buffer_info->def_color;
     ge2d_config_ex.src_para.fill_color_en = input_buffer_info->fill_color_en;
 
-    if (input_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED)
+    /* top layer factor, use premult/coverage/none
+     * depends on top layer mode
+     */
+    if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_PREMULTIPLIED)
+        pge2dinfo->blend_mode = BLEND_MODE_PREMULTIPLIED;
+    else if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_COVERAGE)
+        pge2dinfo->blend_mode = BLEND_MODE_COVERAGE;
+    else
+        pge2dinfo->blend_mode = BLEND_MODE_NONE;
+
+    if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_PREMULTIPLIED)
         ge2d_config_ex.src1_cmult_asel = 2;
-    else if (input_buffer_info->layer_mode == LAYER_MODE_COVERAGE)
+    else if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_COVERAGE)
         ge2d_config_ex.src1_cmult_asel = 0;
-    else if (input_buffer_info->layer_mode == LAYER_MODE_NON)
+    else if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_NON)
         ge2d_config_ex.src1_cmult_asel = 0;
 
     ge2d_config_ex.src2_para.mem_type = input2_buffer_info->memtype;
@@ -850,21 +859,21 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
     ge2d_config_ex.src2_para.color = input2_buffer_info->def_color;
     ge2d_config_ex.src2_para.fill_color_en = input2_buffer_info->fill_color_en;
     if (pge2dinfo->cap_attr == 0x1) {
-        if (input2_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED)
+        if (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_PREMULTIPLIED)
             ge2d_config_ex.src2_cmult_asel = 2;
-        else if (input2_buffer_info->layer_mode == LAYER_MODE_COVERAGE)
+        else if (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_COVERAGE)
             ge2d_config_ex.src2_cmult_asel = 1;
-        else if (input2_buffer_info->layer_mode == LAYER_MODE_NON)
+        else if (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_NON)
             ge2d_config_ex.src2_cmult_asel= 0;
-        if ((input_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED) && (input2_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED))
+        if ((pge2dinfo->src_info[0].layer_mode == LAYER_MODE_PREMULTIPLIED) && (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_PREMULTIPLIED))
             ge2d_config_ex.src2_cmult_ad = 0;
-        else if ((input_buffer_info->layer_mode == LAYER_MODE_COVERAGE) && (input2_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED))
+        else if ((pge2dinfo->src_info[0].layer_mode == LAYER_MODE_COVERAGE) && (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_PREMULTIPLIED))
             ge2d_config_ex.src2_cmult_ad = 0;
-        else if ((input_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED) && (input2_buffer_info->layer_mode == LAYER_MODE_COVERAGE))
+        else if ((pge2dinfo->src_info[0].layer_mode == LAYER_MODE_PREMULTIPLIED) && (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_COVERAGE))
             ge2d_config_ex.src2_cmult_ad = 1;
-        else if ((input_buffer_info->layer_mode == LAYER_MODE_COVERAGE) && (input2_buffer_info->layer_mode == LAYER_MODE_COVERAGE))
+        else if ((pge2dinfo->src_info[0].layer_mode == LAYER_MODE_COVERAGE) && (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_COVERAGE))
             ge2d_config_ex.src2_cmult_ad = 1;
-        else if ((input_buffer_info->layer_mode == LAYER_MODE_COVERAGE) && (input2_buffer_info->layer_mode == LAYER_MODE_NON))
+        else if ((pge2dinfo->src_info[0].layer_mode == LAYER_MODE_COVERAGE) && (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_NON))
             ge2d_config_ex.src2_cmult_ad = 3;
         else
             ge2d_config_ex.src2_cmult_ad = 0;
@@ -1802,6 +1811,7 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     int is_one_plane_input2 = -1;
     int is_one_plane_output = -1;
     int bpp = 0;
+
     buffer_info_t* input_buffer_info = &pge2dinfo->src_info[0];
     buffer_info_t* input2_buffer_info = &pge2dinfo->src_info[1];
     buffer_info_t* output_buffer_info = &pge2dinfo->dst_info;
@@ -1892,11 +1902,21 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     ge2d_config_ex->src_para.color = input_buffer_info->def_color;
     ge2d_config_ex->src_para.fill_color_en = input_buffer_info->fill_color_en;
 
-    if (input_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED)
+    /* top layer factor, use premult/coverage/none
+     * depends on top layer mode
+     */
+    if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_PREMULTIPLIED)
+        pge2dinfo->blend_mode = BLEND_MODE_PREMULTIPLIED;
+    else if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_COVERAGE)
+        pge2dinfo->blend_mode = BLEND_MODE_COVERAGE;
+    else
+        pge2dinfo->blend_mode = BLEND_MODE_NONE;
+
+    if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_PREMULTIPLIED)
         ge2d_config_ex->src1_cmult_asel = 2;
-    else if (input_buffer_info->layer_mode == LAYER_MODE_COVERAGE)
+    else if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_COVERAGE)
         ge2d_config_ex->src1_cmult_asel = 0;
-    else if (input_buffer_info->layer_mode == LAYER_MODE_NON)
+    else if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_NON)
         ge2d_config_ex->src1_cmult_asel = 0;
 
     ge2d_config_ex->src2_para.mem_type = input2_buffer_info->memtype;
@@ -1907,22 +1927,24 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     ge2d_config_ex->src2_para.height = input2_buffer_info->rect.h;
     ge2d_config_ex->src2_para.color = input2_buffer_info->def_color;
     ge2d_config_ex->src2_para.fill_color_en = input2_buffer_info->fill_color_en;
+
     if (pge2dinfo->cap_attr == 0x1) {
-        if (input2_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED)
+        if (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_PREMULTIPLIED)
             ge2d_config_ex->src2_cmult_asel = 2;
-        else if (input2_buffer_info->layer_mode == LAYER_MODE_COVERAGE)
+        else if (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_COVERAGE)
             ge2d_config_ex->src2_cmult_asel = 1;
-        else if (input2_buffer_info->layer_mode == LAYER_MODE_NON)
+        else if (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_NON)
             ge2d_config_ex->src2_cmult_asel= 0;
-        if ((input_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED) && (input2_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED))
+
+        if ((pge2dinfo->src_info[0].layer_mode == LAYER_MODE_PREMULTIPLIED) && (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_PREMULTIPLIED))
             ge2d_config_ex->src2_cmult_ad = 0;
-        else if ((input_buffer_info->layer_mode == LAYER_MODE_COVERAGE) && (input2_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED))
+        else if ((pge2dinfo->src_info[0].layer_mode == LAYER_MODE_COVERAGE) && (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_PREMULTIPLIED))
             ge2d_config_ex->src2_cmult_ad = 0;
-        else if ((input_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED) && (input2_buffer_info->layer_mode == LAYER_MODE_COVERAGE))
+        else if ((pge2dinfo->src_info[0].layer_mode == LAYER_MODE_PREMULTIPLIED) && (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_COVERAGE))
             ge2d_config_ex->src2_cmult_ad = 1;
-        else if ((input_buffer_info->layer_mode == LAYER_MODE_COVERAGE) && (input2_buffer_info->layer_mode == LAYER_MODE_COVERAGE))
+        else if ((pge2dinfo->src_info[0].layer_mode == LAYER_MODE_COVERAGE) && (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_COVERAGE))
             ge2d_config_ex->src2_cmult_ad = 1;
-        else if ((input_buffer_info->layer_mode == LAYER_MODE_COVERAGE) && (input2_buffer_info->layer_mode == LAYER_MODE_NON))
+        else if ((pge2dinfo->src_info[0].layer_mode == LAYER_MODE_COVERAGE) && (pge2dinfo->src_info[1].layer_mode == LAYER_MODE_NON))
             ge2d_config_ex->src2_cmult_ad = 3;
         else
             ge2d_config_ex->src2_cmult_ad = 0;
@@ -2953,12 +2975,7 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
                 return ge2d_fail;
             if (!is_rect_valid(&pge2dinfo->dst_info))
                 return ge2d_fail;
-            if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_PREMULTIPLIED)
-                pge2dinfo->blend_mode = BLEND_MODE_PREMULTIPLIED;
-            else if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_COVERAGE)
-                pge2dinfo->blend_mode = BLEND_MODE_COVERAGE;
-            else
-                pge2dinfo->blend_mode = BLEND_MODE_NONE;
+
             dst_rect.w = pge2dinfo->dst_info.rect.w;
             dst_rect.h = pge2dinfo->dst_info.rect.h;
             dst_rect.x =  pge2dinfo->dst_info.rect.x;
@@ -3079,12 +3096,7 @@ int ge2d_process_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 return ge2d_fail;
             if (!is_rect_valid(&pge2dinfo->dst_info))
                 return ge2d_fail;
-            if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_PREMULTIPLIED)
-                pge2dinfo->blend_mode = BLEND_MODE_PREMULTIPLIED;
-            else if (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_COVERAGE)
-                pge2dinfo->blend_mode = BLEND_MODE_COVERAGE;
-            else
-                pge2dinfo->blend_mode = BLEND_MODE_NONE;
+
             dst_rect.w = pge2dinfo->dst_info.rect.w;
             dst_rect.h = pge2dinfo->dst_info.rect.h;
             dst_rect.x =  pge2dinfo->dst_info.rect.x;
