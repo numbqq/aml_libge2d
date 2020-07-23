@@ -35,13 +35,9 @@
 static int  pixel_to_ge2d_format(int *img_format, int *pge2d_format,int *p_bpp)
 {
     int is_one_plane = -1;
-    int custom_matrix_used = 0;
+    unsigned int mask = ~(MATRIX_CUSTOM | STRIDE_CUSTOM);
 
-    if (*img_format & MATRIX_CUSTOM) {
-        custom_matrix_used = 1;
-        *img_format &= ~MATRIX_CUSTOM;
-    }
-    switch (*img_format) {
+    switch (*img_format & mask) {
         case PIXEL_FORMAT_RGBA_8888:
         case PIXEL_FORMAT_RGBX_8888:
         *pge2d_format = GE2D_FORMAT_S32_ABGR;
@@ -105,8 +101,13 @@ static int  pixel_to_ge2d_format(int *img_format, int *pge2d_format,int *p_bpp)
         break;
     }
 
-    if (custom_matrix_used)
+    if (*img_format & MATRIX_CUSTOM)
         *pge2d_format |= GE2D_MATRIX_CUSTOM;
+    if (*img_format & STRIDE_CUSTOM)
+        *pge2d_format |= GE2D_STRIDE_CUSTOM;
+
+    *img_format &= mask;
+
     return is_one_plane;
 }
 
@@ -152,6 +153,9 @@ static int is_no_alpha(int format)
 static int is_need_swap_src2(int format,buffer_info_t *src2, buffer_info_t *dst)
 {
     int ret = 0;
+    unsigned int mask = ~(MATRIX_CUSTOM | STRIDE_CUSTOM);
+
+    format &= mask;
     /* src2 not support nv21/nv12/yv12, swap src1 and src2 */
     if ((format == PIXEL_FORMAT_YCrCb_420_SP) ||
         (format == PIXEL_FORMAT_YCbCr_420_SP_NV12) ||
@@ -1291,6 +1295,8 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     ge2d_config_mem_ex->dst_mem_alloc_type = output_buffer_info->mem_alloc_type;
     memcpy(&ge2d_config_mem_ex->matrix_custom, &pge2dinfo->matrix_custom,
            sizeof(struct ge2d_matrix_s));
+    memcpy(&ge2d_config_mem_ex->stride_custom, &pge2dinfo->stride_custom,
+           sizeof(struct ge2d_stride_s));
 
     ge2d_config_ex = &(ge2d_config_mem_ex->_ge2d_config_ex);
 
@@ -1499,6 +1505,8 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     ge2d_config_mem_ex->dst_mem_alloc_type = output_buffer_info->mem_alloc_type;
     memcpy(&ge2d_config_mem_ex->matrix_custom, &pge2dinfo->matrix_custom,
            sizeof(struct ge2d_matrix_s));
+    memcpy(&ge2d_config_mem_ex->stride_custom, &pge2dinfo->stride_custom,
+           sizeof(struct ge2d_stride_s));
 
     ge2d_config_ex = &(ge2d_config_mem_ex->_ge2d_config_ex);
 
@@ -1865,6 +1873,22 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     ge2d_config_mem_ex->dst_mem_alloc_type = output_buffer_info->mem_alloc_type;
     memcpy(&ge2d_config_mem_ex->matrix_custom, &pge2dinfo->matrix_custom,
            sizeof(struct ge2d_matrix_s));
+
+    if (pge2dinfo->b_src_swap) {
+        /* swap customized stride for src1 & src2 */
+        memcpy(ge2d_config_mem_ex->stride_custom.src1_stride,
+                pge2dinfo->stride_custom.src2_stride,
+                sizeof(unsigned int) * MAX_PLANE);
+        memcpy(ge2d_config_mem_ex->stride_custom.src2_stride,
+                pge2dinfo->stride_custom.src1_stride,
+                sizeof(unsigned int) * MAX_PLANE);
+        memcpy(ge2d_config_mem_ex->stride_custom.dst_stride,
+                pge2dinfo->stride_custom.dst_stride,
+                sizeof(unsigned int) * MAX_PLANE);
+    } else {
+        memcpy(&ge2d_config_mem_ex->stride_custom, &pge2dinfo->stride_custom,
+                sizeof(struct ge2d_stride_s));
+    }
 
     ge2d_config_ex = &(ge2d_config_mem_ex->_ge2d_config_ex);
 

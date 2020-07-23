@@ -85,6 +85,10 @@ typedef enum  {
 /* if customized matrix is used, set this flag in format */
 #define MATRIX_CUSTOM               (0x80000000)
 
+/* if customized stride is used, set this flag in format */
+#define STRIDE_CUSTOM               (0x40000000)
+
+
 typedef enum {
     GE2D_ROTATION_0,
     GE2D_ROTATION_90,
@@ -145,6 +149,12 @@ struct ge2d_matrix_s {
 	unsigned char sat_in_en;
 };
 
+struct ge2d_stride_s {
+	unsigned int src1_stride[MAX_PLANE];
+	unsigned int src2_stride[MAX_PLANE];
+	unsigned int dst_stride[MAX_PLANE];
+};
+
 typedef struct aml_ge2d_info {
     int ge2d_fd;     /* ge2d_fd */
     int ion_fd; /* ion_fd */
@@ -161,6 +171,7 @@ typedef struct aml_ge2d_info {
     int cap_attr;
     int b_src_swap;
     struct ge2d_matrix_s matrix_custom;
+    struct ge2d_stride_s stride_custom;
     unsigned int reserved;
 } aml_ge2d_info_t;
 

@@ -282,6 +282,8 @@ struct config_para_ex_memtype_s {
 	unsigned int dst_mem_alloc_type;
 	/* for customized matrix */
 	struct ge2d_matrix_s matrix_custom;
+	/* for customized stride */
+	struct ge2d_stride_s stride_custom;
 };
 
 struct config_ge2d_para_ex_s {
@@ -304,6 +306,7 @@ struct ge2d_dmabuf_exp_s {
 };
 
 #define GE2D_MATRIX_CUSTOM      (1 << 29)
+#define GE2D_STRIDE_CUSTOM      (1 << 30)
 
 #define GE2D_ENDIAN_SHIFT       24
 #define GE2D_ENDIAN_MASK        (0x1 << GE2D_ENDIAN_SHIFT)

@@ -27,7 +27,7 @@
 static void ge2d_calculate_buffer_size(const buffer_info_t* buffer,
                                        unsigned int* size_out)
 {
-    unsigned int mask = ~MATRIX_CUSTOM;
+    unsigned int mask = ~(MATRIX_CUSTOM | STRIDE_CUSTOM);
     unsigned int image_width = buffer->canvas_w;
 
     switch (buffer->format & mask) {
