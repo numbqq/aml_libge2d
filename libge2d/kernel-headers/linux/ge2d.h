@@ -97,8 +97,6 @@ struct config_para_s {
     struct src_key_ctrl_s  src_key;
 };
 
-
-
 struct rectangle_s {
     int x;   /* X coordinate of its top-left point */
     int y;   /* Y coordinate of its top-left point */
@@ -391,7 +389,7 @@ struct ge2d_dmabuf_exp_s {
 #define GE2D_BPP_32BIT                  0x00300
 #define GE2D_FORMAT_DEEP_COLOR   0x40000
 #define GE2D_FORMAT_YUV                 0x20000
-#define GE2D_FORMAT_COMP_RANGE          0x10000
+#define GE2D_FORMAT_FULL_RANGE          0x10000
 /*bit8(2)  format   bi6(2) mode_8b_sel  bit5(1)lut_en   bit2 sep_en*/
 /*M  separate block S one block.*/
 

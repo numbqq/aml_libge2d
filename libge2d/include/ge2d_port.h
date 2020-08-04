@@ -73,11 +73,11 @@ typedef enum  {
     PIXEL_FORMAT_RGB_888            = 3,
     PIXEL_FORMAT_RGB_565            = 4,
     PIXEL_FORMAT_BGRA_8888          = 5,
-    PIXEL_FORMAT_YV12               = 0x32315659,  // YCrCb 4:2:0 Planar  YYYY......  U......V......,actually is is YU12
-    PIXEL_FORMAT_Y8                 = 0x20203859,  // YYYY
+    PIXEL_FORMAT_YV12               = 6,           // YCrCb 4:2:0 Planar  YYYY......  U......V......,actually is is YU12
+    PIXEL_FORMAT_Y8                 = 7,           // YYYY
     PIXEL_FORMAT_YCbCr_422_SP       = 0x10,        // NV16   YYYY.....UVUV....
     PIXEL_FORMAT_YCrCb_420_SP       = 0x11,        // NV21   YCrCb YYYY.....VU....
-    PIXEL_FORMAT_YCbCr_422_UYVY        = 0x14,     // UYVY   U0-Y0-V0-Y1 U2-Y2-V2-Y3 U4 ...
+    PIXEL_FORMAT_YCbCr_422_UYVY     = 0x14,        // UYVY   U0-Y0-V0-Y1 U2-Y2-V2-Y3 U4 ...
     PIXEL_FORMAT_BGR_888,
     PIXEL_FORMAT_YCbCr_420_SP_NV12,                // NV12 YCbCr YYYY.....UV....
 } pixel_format_t;
@@ -88,6 +88,8 @@ typedef enum  {
 /* if customized stride is used, set this flag in format */
 #define STRIDE_CUSTOM               (0x40000000)
 
+/* if full range is used, set this flag in format */
+#define FORMAT_FULL_RANGE           (0x20000000)
 
 typedef enum {
     GE2D_ROTATION_0,
