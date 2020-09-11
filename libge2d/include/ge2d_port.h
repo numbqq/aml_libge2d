@@ -29,7 +29,15 @@
 extern "C" {
 #endif
 
-#define MAX_PLANE  4
+#define GE2D_MAX_PLANE  4
+
+enum ge2d_data_type_e {
+    AML_GE2D_SRC,
+    AML_GE2D_SRC2,
+    AML_GE2D_DST,
+    AML_GE2D_TYPE_INVALID,
+};
+
 typedef enum {
     GE2D_CANVAS_OSD0 = 0,
     GE2D_CANVAS_OSD1,
@@ -116,14 +124,14 @@ typedef struct{
 typedef struct buffer_info {
     unsigned int mem_alloc_type;
     unsigned int memtype;
-    char* vaddr[MAX_PLANE];
-    unsigned long offset[MAX_PLANE];
+    char* vaddr[GE2D_MAX_PLANE];
+    unsigned long offset[GE2D_MAX_PLANE];
     unsigned int canvas_w;
     unsigned int canvas_h;
     rectangle_t rect;
     int format;
     unsigned int rotation;
-    int shared_fd[MAX_PLANE];
+    int shared_fd[GE2D_MAX_PLANE];
     unsigned char plane_alpha;
     unsigned char layer_mode;
     unsigned char fill_color_en;
@@ -152,9 +160,9 @@ struct ge2d_matrix_s {
 };
 
 struct ge2d_stride_s {
-	unsigned int src1_stride[MAX_PLANE];
-	unsigned int src2_stride[MAX_PLANE];
-	unsigned int dst_stride[MAX_PLANE];
+	unsigned int src1_stride[GE2D_MAX_PLANE];
+	unsigned int src2_stride[GE2D_MAX_PLANE];
+	unsigned int dst_stride[GE2D_MAX_PLANE];
 };
 
 typedef struct aml_ge2d_info {
@@ -181,7 +189,17 @@ int ge2d_open(void);
 int ge2d_close(int fd);
 int ge2d_get_cap(int fd);
 int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo);
+int ge2d_attach_dma_fd(int fd, aml_ge2d_info_t *pge2dinfo,
+		       enum ge2d_data_type_e data_type);
+int ge2d_config(int fd,aml_ge2d_info_t *pge2dinfo);
+int ge2d_execute(int fd,aml_ge2d_info_t *pge2dinfo);
+void ge2d_detach_dma_fd(int fd, enum ge2d_data_type_e data_type);
+/* for dst buffer */
+void sync_dst_dmabuf_to_cpu(aml_ge2d_info_t *pge2dinfo);
+/* for src0 or src1, use src_id to config */
+void sync_src_dmabuf_to_device(aml_ge2d_info_t *pge2dinfo, int src_id);
 int ge2d_process_ion(int fd,aml_ge2d_info_t *pge2dinfo);
+
 #if defined (__cplusplus)
 }
 #endif

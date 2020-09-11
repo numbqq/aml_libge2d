@@ -56,6 +56,9 @@
 #define  GE2D_SET_COEF              0x46fb
 #define  GE2D_ANTIFLICKER_ENABLE    0x46f8
 
+/* Indicates that dma fd has been attatched using ioctl GE2D_ATTACH_DMA_FD */
+#define DMA_FD_ATTACHED     (-2)
+
 typedef enum {
     OSD0_OSD0 = 0,
     OSD0_OSD1,
@@ -303,6 +306,12 @@ struct ge2d_dmabuf_exp_s {
 	int fd;
 };
 
+struct ge2d_dmabuf_attach_s {
+	int dma_fd[GE2D_MAX_PLANE];
+	enum ge2d_data_type_e data_type;
+};
+
+
 #define GE2D_MATRIX_CUSTOM      (1 << 29)
 #define GE2D_STRIDE_CUSTOM      (1 << 30)
 
@@ -527,5 +536,8 @@ struct ge2d_dmabuf_exp_s {
 
 #define GE2D_SYNC_DEVICE _IOW(GE2D_IOC_MAGIC, 0x08, int)
 #define GE2D_SYNC_CPU _IOW(GE2D_IOC_MAGIC, 0x09, int)
-
+#define GE2D_ATTACH_DMA_FD   \
+	_IOW(GE2D_IOC_MAGIC, 0x0a, struct ge2d_dmabuf_attach_s)
+#define GE2D_DETACH_DMA_FD   \
+	_IOW(GE2D_IOC_MAGIC, 0x0b, enum ge2d_data_type_e)
 #endif /* GE2D_H */

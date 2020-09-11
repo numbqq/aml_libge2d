@@ -19,12 +19,10 @@
 #include "include/ge2d_com.h"
 #include "include/dmabuf.h"
 
-
 #define   FILE_NAME_GE2D        "/dev/ge2d"
 
 #define CANVAS_ALIGNED(x)        (((x) + 31) & ~31)
 #define YV12_Y_ALIGNED(x)        (((x) + 63) & ~63)
-
 
 #define GE2D_BPP_32  32
 #define GE2D_BPP_24  24
@@ -119,7 +117,6 @@ static void ge2d_set_canvas(int bpp, int w,int h, int *canvas_w, int *canvas_h)
    *canvas_h = h;
 }
 
-
 static inline unsigned blendop(unsigned color_blending_mode,
         unsigned color_blending_src_factor,
         unsigned color_blending_dst_factor,
@@ -133,7 +130,6 @@ static inline unsigned blendop(unsigned color_blending_mode,
         (alpha_blending_mode << 8) |
         (alpha_blending_src_factor << 4) | (alpha_blending_dst_factor << 0);
 }
-
 
 static int is_no_alpha(int format)
 {
@@ -235,7 +231,7 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
     buffer_info_t* output_buffer_info = &(pge2dinfo->dst_info);
 
     if (output_buffer_info->plane_number < 1 ||
-        output_buffer_info->plane_number > MAX_PLANE)
+        output_buffer_info->plane_number > GE2D_MAX_PLANE)
         output_buffer_info->plane_number = 1;
     memset(&ge2d_config_ex, 0, sizeof(struct config_para_ex_ion_s ));
 
@@ -433,10 +429,10 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
     buffer_info_t* output_buffer_info = &(pge2dinfo->dst_info);
 
     if (input_buffer_info->plane_number < 1 ||
-        input_buffer_info->plane_number > MAX_PLANE)
+        input_buffer_info->plane_number > GE2D_MAX_PLANE)
         input_buffer_info->plane_number = 1;
     if (output_buffer_info->plane_number < 1 ||
-        output_buffer_info->plane_number > MAX_PLANE)
+        output_buffer_info->plane_number > GE2D_MAX_PLANE)
         output_buffer_info->plane_number = 1;
     memset(&ge2d_config_ex, 0, sizeof(struct config_para_ex_ion_s ));
 
@@ -790,13 +786,13 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
         pge2dinfo->b_src_swap = 0;
     D_GE2D("b_src_swap=%d\n",pge2dinfo->b_src_swap);
     if (input_buffer_info->plane_number < 1 ||
-        input_buffer_info->plane_number > MAX_PLANE)
+        input_buffer_info->plane_number > GE2D_MAX_PLANE)
         input_buffer_info->plane_number = 1;
     if (input2_buffer_info->plane_number < 1 ||
-        input2_buffer_info->plane_number > MAX_PLANE)
+        input2_buffer_info->plane_number > GE2D_MAX_PLANE)
         input2_buffer_info->plane_number = 1;
     if (output_buffer_info->plane_number < 1 ||
-        output_buffer_info->plane_number > MAX_PLANE)
+        output_buffer_info->plane_number > GE2D_MAX_PLANE)
         output_buffer_info->plane_number = 1;
     memset(&ge2d_config_ex, 0, sizeof(struct config_para_ex_ion_s ));
 
@@ -1287,7 +1283,7 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     buffer_info_t* output_buffer_info = &(pge2dinfo->dst_info);
 
     if (output_buffer_info->plane_number < 1 ||
-        output_buffer_info->plane_number > MAX_PLANE)
+        output_buffer_info->plane_number > GE2D_MAX_PLANE)
         output_buffer_info->plane_number = 1;
     memset(&ge2d_config_para_ex, 0, sizeof(struct config_ge2d_para_ex_s));
     ge2d_config_mem_ex = &(ge2d_config_para_ex.para_config_memtype);
@@ -1494,10 +1490,10 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     buffer_info_t* output_buffer_info = &(pge2dinfo->dst_info);
 
     if (input_buffer_info->plane_number < 1 ||
-        input_buffer_info->plane_number > MAX_PLANE)
+        input_buffer_info->plane_number > GE2D_MAX_PLANE)
         input_buffer_info->plane_number = 1;
     if (output_buffer_info->plane_number < 1 ||
-        output_buffer_info->plane_number > MAX_PLANE)
+        output_buffer_info->plane_number > GE2D_MAX_PLANE)
         output_buffer_info->plane_number = 1;
     memset(&ge2d_config_para_ex, 0, sizeof(struct config_ge2d_para_ex_s));
     ge2d_config_mem_ex = &(ge2d_config_para_ex.para_config_memtype);
@@ -1670,7 +1666,7 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex->src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
                 ge2d_config_ex->src_planes[0].w = s_canvas_w;
                 ge2d_config_ex->src_planes[0].h = s_canvas_h;
-                ge2d_config_ex->src_planes[1].addr = (s_canvas_w * s_canvas_h);;
+                ge2d_config_ex->src_planes[1].addr = (s_canvas_w * s_canvas_h);
                 ge2d_config_ex->src_planes[1].shared_fd = 0;
                 ge2d_config_ex->src_planes[1].w = s_canvas_w;
                 ge2d_config_ex->src_planes[1].h = s_canvas_h;
@@ -1859,19 +1855,19 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
         pge2dinfo->b_src_swap = 0;
     D_GE2D("b_src_swap=%d\n",pge2dinfo->b_src_swap);
     if (input_buffer_info->plane_number < 1 ||
-        input_buffer_info->plane_number > MAX_PLANE)
+        input_buffer_info->plane_number > GE2D_MAX_PLANE)
         input_buffer_info->plane_number = 1;
     if (input2_buffer_info->plane_number < 1 ||
-        input2_buffer_info->plane_number > MAX_PLANE)
+        input2_buffer_info->plane_number > GE2D_MAX_PLANE)
         input2_buffer_info->plane_number = 1;
     if (output_buffer_info->plane_number < 1 ||
-        output_buffer_info->plane_number > MAX_PLANE)
+        output_buffer_info->plane_number > GE2D_MAX_PLANE)
         output_buffer_info->plane_number = 1;
     memset(&ge2d_config_para_ex, 0, sizeof(struct config_ge2d_para_ex_s));
     ge2d_config_mem_ex = &(ge2d_config_para_ex.para_config_memtype);
     ge2d_config_mem_ex->ge2d_magic = sizeof(struct config_para_ex_memtype_s);
     ge2d_config_mem_ex->src1_mem_alloc_type = input_buffer_info->mem_alloc_type;
-    ge2d_config_mem_ex->src2_mem_alloc_type = input2_buffer_info->mem_alloc_type;;
+    ge2d_config_mem_ex->src2_mem_alloc_type = input2_buffer_info->mem_alloc_type;
     ge2d_config_mem_ex->dst_mem_alloc_type = output_buffer_info->mem_alloc_type;
     memcpy(&ge2d_config_mem_ex->matrix_custom, &pge2dinfo->matrix_custom,
            sizeof(struct ge2d_matrix_s));
@@ -1880,13 +1876,13 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
         /* swap customized stride for src1 & src2 */
         memcpy(ge2d_config_mem_ex->stride_custom.src1_stride,
                 pge2dinfo->stride_custom.src2_stride,
-                sizeof(unsigned int) * MAX_PLANE);
+                sizeof(unsigned int) * GE2D_MAX_PLANE);
         memcpy(ge2d_config_mem_ex->stride_custom.src2_stride,
                 pge2dinfo->stride_custom.src1_stride,
-                sizeof(unsigned int) * MAX_PLANE);
+                sizeof(unsigned int) * GE2D_MAX_PLANE);
         memcpy(ge2d_config_mem_ex->stride_custom.dst_stride,
                 pge2dinfo->stride_custom.dst_stride,
-                sizeof(unsigned int) * MAX_PLANE);
+                sizeof(unsigned int) * GE2D_MAX_PLANE);
     } else {
         memcpy(&ge2d_config_mem_ex->stride_custom, &pge2dinfo->stride_custom,
                 sizeof(struct ge2d_stride_s));
@@ -2906,7 +2902,8 @@ int ge2d_close(int fd)
     return ret;
 }
 
-static void sync_dst_dmabuf_to_cpu(aml_ge2d_info_t *pge2dinfo) {
+void sync_dst_dmabuf_to_cpu(aml_ge2d_info_t *pge2dinfo)
+{
     int dma_fd = -1;
 
     for (int i = 0; i < pge2dinfo->dst_info.plane_number; i++) {
@@ -2916,7 +2913,8 @@ static void sync_dst_dmabuf_to_cpu(aml_ge2d_info_t *pge2dinfo) {
     }
 }
 
-static void sync_src_dmabuf_to_device(aml_ge2d_info_t *pge2dinfo, int src_id) {
+void sync_src_dmabuf_to_device(aml_ge2d_info_t *pge2dinfo, int src_id)
+{
     int dma_fd = -1;
 
     for (int i = 0; i < pge2dinfo->src_info[src_id].plane_number; i++) {
@@ -2926,12 +2924,14 @@ static void sync_src_dmabuf_to_device(aml_ge2d_info_t *pge2dinfo, int src_id) {
     }
 }
 
+/* if get_dst_op_number() > 1, use this interface
+ * ge2d_process = ge2d_config + ge2d_execute
+ */
 int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
 {
-    rectangle_t src_rect[2];
     rectangle_t dst_rect;
     int dx = 0, dy = 0;
-    int ret = -1, dma_fd = -1;
+    int ret = -1;
     int i;
     int op_number = 0;
 
@@ -3032,6 +3032,200 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
                             &(pge2dinfo->src_info[1].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                 }
+            }
+            break;
+        default:
+            E_GE2D("ge2d(%d) opration not support!\n",pge2dinfo->ge2d_op);
+            return ge2d_fail;
+    }
+
+    return ge2d_success;
+}
+
+int ge2d_attach_dma_fd(int fd, aml_ge2d_info_t *pge2dinfo,
+                       enum ge2d_data_type_e data_type)
+{
+    struct ge2d_dmabuf_attach_s attach;
+    int i, ret = -1;
+    int *shared_fd;
+
+    switch (data_type) {
+    case AML_GE2D_SRC:
+        shared_fd = pge2dinfo->src_info[0].shared_fd;
+        break;
+    case AML_GE2D_SRC2:
+        shared_fd = pge2dinfo->src_info[1].shared_fd;
+        break;
+    case AML_GE2D_DST:
+        shared_fd = pge2dinfo->dst_info.shared_fd;
+        break;
+    default:
+        E_GE2D("%s, data_type error\n", __func__);
+        return ge2d_fail;
+    }
+    memcpy(attach.dma_fd, shared_fd, sizeof(int) * GE2D_MAX_PLANE);
+    attach.data_type = data_type;
+
+    ret = ioctl(fd, GE2D_ATTACH_DMA_FD, &attach);
+    if (ret < 0) {
+        E_GE2D("%s, attatch failed\n", __func__);
+        return ge2d_fail;
+    }
+
+    /* shared_fd have been attatched using ge2d_attach_dma_fd()
+     * reset them to DMA_FD_ATTACHED
+     */
+    switch (data_type) {
+    case AML_GE2D_SRC:
+        for (i = 0; i < pge2dinfo->src_info[0].plane_number; i++)
+            pge2dinfo->src_info[0].shared_fd[i] = DMA_FD_ATTACHED;
+            break;
+        case AML_GE2D_SRC2:
+            for (i = 0; i < pge2dinfo->src_info[1].plane_number; i++)
+                pge2dinfo->src_info[1].shared_fd[i] = DMA_FD_ATTACHED;
+            break;
+        case AML_GE2D_DST:
+            for (i = 0; i < pge2dinfo->dst_info.plane_number; i++)
+                pge2dinfo->dst_info.shared_fd[i] = DMA_FD_ATTACHED;
+                break;
+        default:
+            E_GE2D("%s, data_type error\n", __func__);
+            return ge2d_fail;
+    }
+
+    return ge2d_success;
+}
+
+void ge2d_detach_dma_fd(int fd, enum ge2d_data_type_e data_type)
+{
+    int ret = -1;
+
+    ret = ioctl(fd, GE2D_DETACH_DMA_FD, &data_type);
+    if (ret < 0) {
+        E_GE2D("%s, detatch failed\n", __func__);
+        return;
+    }
+}
+
+int ge2d_config(int fd,aml_ge2d_info_t *pge2dinfo)
+{
+    int ret = -1, i;
+
+    if (!pge2dinfo) {
+        E_GE2D("pge2dinfo is NULL!\n");
+        return ge2d_fail;
+    }
+
+    switch (pge2dinfo->ge2d_op) {
+        case AML_GE2D_FILLRECTANGLE:
+            ret = ge2d_fillrectangle_config_ex(fd, pge2dinfo);
+            break;
+        case AML_GE2D_BLIT:
+            if (!is_rect_valid(&pge2dinfo->src_info[0]))
+                return ge2d_fail;
+            if (!is_rect_valid(&pge2dinfo->dst_info))
+                return ge2d_fail;
+
+            pge2dinfo->dst_op_cnt = 0;
+            ret = ge2d_blit_config_ex(fd, pge2dinfo);
+            break;
+        case AML_GE2D_STRETCHBLIT:
+            if (!is_rect_valid(&pge2dinfo->src_info[0]))
+                return ge2d_fail;
+
+            pge2dinfo->dst_op_cnt = 0;
+            ret = ge2d_blit_config_ex(fd, pge2dinfo);
+            break;
+        case AML_GE2D_BLEND:
+            if ((pge2dinfo->dst_info.memtype == CANVAS_OSD0) && (pge2dinfo->src_info[1].memtype == CANVAS_OSD0)) {
+                memcpy(&pge2dinfo->src_info[1],&pge2dinfo->dst_info,sizeof(buffer_info_t));
+                pge2dinfo->src_info[1].rect.y = pge2dinfo->offset + pge2dinfo->src_info[1].rect.y;
+            }
+            if (!is_rect_valid(&pge2dinfo->src_info[0]))
+                return ge2d_fail;
+            if (!is_rect_valid(&pge2dinfo->src_info[1]))
+                return ge2d_fail;
+            if (!is_rect_valid(&pge2dinfo->dst_info))
+                return ge2d_fail;
+
+            ret = ge2d_blend_config_ex(fd, pge2dinfo);
+            break;
+        default:
+            E_GE2D("ge2d(%d) config not support!\n",pge2dinfo->ge2d_op);
+            return ge2d_fail;
+    }
+
+    return ge2d_success;
+}
+
+int ge2d_execute(int fd,aml_ge2d_info_t *pge2dinfo)
+{
+    rectangle_t dst_rect;
+    int dx = 0, dy = 0;
+    int ret = -1;
+
+    if (!pge2dinfo) {
+        E_GE2D("pge2dinfo is NULL!\n");
+        return ge2d_fail;
+    }
+
+    switch (pge2dinfo->ge2d_op) {
+        case AML_GE2D_FILLRECTANGLE:
+            dst_rect.w = pge2dinfo->dst_info.rect.w;
+            dst_rect.h = pge2dinfo->dst_info.rect.h;
+            dst_rect.x =  pge2dinfo->dst_info.rect.x;
+            dst_rect.y = pge2dinfo->offset + pge2dinfo->dst_info.rect.y;
+
+            ret = ge2d_fillrectangle(fd,&dst_rect,pge2dinfo->color);
+            break;
+        case AML_GE2D_BLIT:
+            dx = pge2dinfo->dst_info.rect.x;
+            dy = pge2dinfo->offset + pge2dinfo->dst_info.rect.y;
+            pge2dinfo->dst_op_cnt = 0;
+            if (is_no_alpha(pge2dinfo->src_info[0].format))
+                ret = ge2d_blit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy);
+            else
+                ret = ge2d_blit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy);
+            break;
+        case AML_GE2D_STRETCHBLIT:
+            dst_rect.w = pge2dinfo->dst_info.rect.w;
+            dst_rect.h = pge2dinfo->dst_info.rect.h;
+            dst_rect.x =  pge2dinfo->dst_info.rect.x;
+            dst_rect.y = pge2dinfo->offset + pge2dinfo->dst_info.rect.y;
+
+            pge2dinfo->dst_op_cnt = 0;
+            if (is_no_alpha(pge2dinfo->src_info[0].format))
+                ret = ge2d_strechblit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect);
+            else
+                ret = ge2d_strechblit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect);
+
+            break;
+        case AML_GE2D_BLEND:
+            dst_rect.w = pge2dinfo->dst_info.rect.w;
+            dst_rect.h = pge2dinfo->dst_info.rect.h;
+            dst_rect.x =  pge2dinfo->dst_info.rect.x;
+            dst_rect.y = pge2dinfo->offset + pge2dinfo->dst_info.rect.y;
+
+            if ((is_no_alpha(pge2dinfo->src_info[0].format))
+                || (is_no_alpha(pge2dinfo->src_info[1].format))
+                || (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_NON)) {
+                if (pge2dinfo->b_src_swap)
+                    ret = ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
+                        &(pge2dinfo->src_info[0].rect),
+                        &dst_rect,pge2dinfo->blend_mode);
+                else
+                    ret = ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
+                        &(pge2dinfo->src_info[1].rect),
+                        &dst_rect,pge2dinfo->blend_mode);
+            } else {
+                if (pge2dinfo->b_src_swap)
+                    ret = ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
+                        &(pge2dinfo->src_info[0].rect),
+                        &dst_rect,pge2dinfo->blend_mode);
+                else
+                    ret = ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
+                        &(pge2dinfo->src_info[1].rect),
+                        &dst_rect,pge2dinfo->blend_mode);
             }
             break;
         default:
