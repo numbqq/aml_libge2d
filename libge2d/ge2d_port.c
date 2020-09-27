@@ -582,11 +582,11 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex.src_planes[0].h = s_canvas_h;
                 /* android is ycrcb,kernel is ycbcr,swap the addr */
                 ge2d_config_ex.src_planes[1].addr = input_buffer_info->offset[1];
-                ge2d_config_ex.src_planes[1].shared_fd = input_buffer_info->shared_fd[1];
+                ge2d_config_ex.src_planes[1].shared_fd = input_buffer_info->shared_fd[2];
                 ge2d_config_ex.src_planes[1].w = CANVAS_ALIGNED(s_canvas_w/2);
                 ge2d_config_ex.src_planes[1].h = s_canvas_h/2;
                 ge2d_config_ex.src_planes[2].addr = input_buffer_info->offset[2];
-                ge2d_config_ex.src_planes[2].shared_fd = input_buffer_info->shared_fd[2];
+                ge2d_config_ex.src_planes[2].shared_fd = input_buffer_info->shared_fd[1];
                 ge2d_config_ex.src_planes[2].w = CANVAS_ALIGNED(s_canvas_w/2);
                 ge2d_config_ex.src_planes[2].h = s_canvas_h/2;
                 if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
@@ -1015,11 +1015,11 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex.src_planes[0].h = s_canvas_h;
                 /* android is ycrcb,kernel is ycbcr,swap the addr */
                 ge2d_config_ex.src_planes[1].addr = input_buffer_info->offset[1];
-                ge2d_config_ex.src_planes[1].shared_fd = input_buffer_info->shared_fd[1];
+                ge2d_config_ex.src_planes[1].shared_fd = input_buffer_info->shared_fd[2];
                 ge2d_config_ex.src_planes[1].w = CANVAS_ALIGNED(s_canvas_w/2);
                 ge2d_config_ex.src_planes[1].h = s_canvas_h/2;
                 ge2d_config_ex.src_planes[2].addr = input_buffer_info->offset[2];
-                ge2d_config_ex.src_planes[2].shared_fd = input_buffer_info->shared_fd[2];
+                ge2d_config_ex.src_planes[2].shared_fd = input_buffer_info->shared_fd[1];
                 ge2d_config_ex.src_planes[2].w = CANVAS_ALIGNED(s_canvas_w/2);
                 ge2d_config_ex.src_planes[2].h = s_canvas_h/2;
                 if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
@@ -1109,11 +1109,11 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex.src2_planes[0].h = s2_canvas_h;
                 /* android is ycrcb,kernel is ycbcr,swap the addr */
                 ge2d_config_ex.src2_planes[1].addr = input2_buffer_info->offset[1];
-                ge2d_config_ex.src2_planes[1].shared_fd = input2_buffer_info->shared_fd[1];
+                ge2d_config_ex.src2_planes[1].shared_fd = input2_buffer_info->shared_fd[2];
                 ge2d_config_ex.src2_planes[1].w = CANVAS_ALIGNED(s2_canvas_w/2);
                 ge2d_config_ex.src2_planes[1].h = s2_canvas_h/2;
                 ge2d_config_ex.src2_planes[2].addr = input2_buffer_info->offset[2];
-                ge2d_config_ex.src2_planes[2].shared_fd = input2_buffer_info->shared_fd[2];
+                ge2d_config_ex.src2_planes[2].shared_fd = input2_buffer_info->shared_fd[1];
                 ge2d_config_ex.src2_planes[2].w = CANVAS_ALIGNED(s2_canvas_w/2);
                 ge2d_config_ex.src2_planes[2].h = s2_canvas_h/2;
                 if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
@@ -1668,11 +1668,11 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex->src_planes[0].h = s_canvas_h;
                 /* android is ycrcb,kernel is ycbcr,swap the addr */
                 ge2d_config_ex->src_planes[1].addr = input_buffer_info->offset[1];
-                ge2d_config_ex->src_planes[1].shared_fd = input_buffer_info->shared_fd[1];
+                ge2d_config_ex->src_planes[1].shared_fd = input_buffer_info->shared_fd[2];
                 ge2d_config_ex->src_planes[1].w = CANVAS_ALIGNED(s_canvas_w/2);
                 ge2d_config_ex->src_planes[1].h = s_canvas_h/2;
                 ge2d_config_ex->src_planes[2].addr = input_buffer_info->offset[2];
-                ge2d_config_ex->src_planes[2].shared_fd = input_buffer_info->shared_fd[2];
+                ge2d_config_ex->src_planes[2].shared_fd = input_buffer_info->shared_fd[1];
                 ge2d_config_ex->src_planes[2].w = CANVAS_ALIGNED(s_canvas_w/2);
                 ge2d_config_ex->src_planes[2].h = s_canvas_h/2;
                 if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
@@ -2131,11 +2131,11 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex->src_planes[0].h = s_canvas_h;
                 /* android is ycrcb,kernel is ycbcr,swap the addr */
                 ge2d_config_ex->src_planes[1].addr = input_buffer_info->offset[1];
-                ge2d_config_ex->src_planes[1].shared_fd = input_buffer_info->shared_fd[1];
+                ge2d_config_ex->src_planes[1].shared_fd = input_buffer_info->shared_fd[2];
                 ge2d_config_ex->src_planes[1].w = CANVAS_ALIGNED(s_canvas_w/2);
                 ge2d_config_ex->src_planes[1].h = s_canvas_h/2;
                 ge2d_config_ex->src_planes[2].addr = input_buffer_info->offset[2];
-                ge2d_config_ex->src_planes[2].shared_fd = input_buffer_info->shared_fd[2];
+                ge2d_config_ex->src_planes[2].shared_fd = input_buffer_info->shared_fd[1];
                 ge2d_config_ex->src_planes[2].w = CANVAS_ALIGNED(s_canvas_w/2);
                 ge2d_config_ex->src_planes[2].h = s_canvas_h/2;
                 if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
@@ -2225,11 +2225,11 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex->src2_planes[0].h = s2_canvas_h;
                 /* android is ycrcb,kernel is ycbcr,swap the addr */
                 ge2d_config_ex->src2_planes[1].addr = input2_buffer_info->offset[1];
-                ge2d_config_ex->src2_planes[1].shared_fd = input2_buffer_info->shared_fd[1];
+                ge2d_config_ex->src2_planes[1].shared_fd = input2_buffer_info->shared_fd[2];
                 ge2d_config_ex->src2_planes[1].w = CANVAS_ALIGNED(s2_canvas_w/2);
                 ge2d_config_ex->src2_planes[1].h = s2_canvas_h/2;
                 ge2d_config_ex->src2_planes[2].addr = input2_buffer_info->offset[2];
-                ge2d_config_ex->src2_planes[2].shared_fd = input2_buffer_info->shared_fd[2];
+                ge2d_config_ex->src2_planes[2].shared_fd = input2_buffer_info->shared_fd[1];
                 ge2d_config_ex->src2_planes[2].w = CANVAS_ALIGNED(s2_canvas_w/2);
                 ge2d_config_ex->src2_planes[2].h = s2_canvas_h/2;
                 if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
