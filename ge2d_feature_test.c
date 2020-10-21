@@ -593,7 +593,7 @@ static int do_blend(aml_ge2d_t *amlge2d)
 
     printf("do_blend test case:\n");
 
-    if (pge2dinfo->cap_attr == 0x1) {
+    if (pge2dinfo->cap_attr & SRC2_ALPHA) {
         /* do blend src1 blend src2(dst) to dst */
         printf("one step blend\n");
         ret = aml_read_file_src1(amlge2d, SRC1_FILE_NAME);

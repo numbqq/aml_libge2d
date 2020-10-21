@@ -32,6 +32,8 @@ typedef struct aml_ge2d {
 int aml_ge2d_init(aml_ge2d_t *pge2d);
 void aml_ge2d_exit(aml_ge2d_t *pge2d);
 
+int aml_ge2d_get_cap(int fd_ge2d);
+
 int aml_ge2d_mem_alloc_ion(aml_ge2d_t *pge2d);
 void aml_ge2d_mem_free_ion(aml_ge2d_t *pge2d);
 /* support both ion & dma_buf */
