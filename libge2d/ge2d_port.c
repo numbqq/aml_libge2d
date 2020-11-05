@@ -775,7 +775,8 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
         pge2dinfo->b_src_swap = 1;
         D_GE2D("NOTE:src2 not support nv21/nv12, swap src1 and src2!\n");
     }
-    else if ((pge2dinfo->cap_attr == 0) && (input_buffer_info->plane_alpha == 0xff) &&
+    else if (!(pge2dinfo->cap_attr & SRC2_ALPHA) &&
+        (input_buffer_info->plane_alpha == 0xff) &&
         (input2_buffer_info->plane_alpha != 0xff) &&
         (input_buffer_info->layer_mode != LAYER_MODE_NON) &&
         (input2_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED)) {
@@ -1845,7 +1846,8 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
         pge2dinfo->b_src_swap = 1;
         D_GE2D("NOTE:src2 not support nv21/nv12, swap src1 and src2!\n");
     }
-    else if ((pge2dinfo->cap_attr == 0) && (input_buffer_info->plane_alpha == 0xff) &&
+    else if (!(pge2dinfo->cap_attr & SRC2_ALPHA) &&
+        (input_buffer_info->plane_alpha == 0xff) &&
         (input2_buffer_info->plane_alpha != 0xff) &&
         (input_buffer_info->layer_mode != LAYER_MODE_NON) &&
         (input2_buffer_info->layer_mode == LAYER_MODE_PREMULTIPLIED)) {
