@@ -112,6 +112,8 @@ typedef enum {
     GE2D_ROTATION_90,
     GE2D_ROTATION_180,
     GE2D_ROTATION_270,
+    GE2D_MIRROR_X,
+    GE2D_MIRROR_Y,
 } GE2D_ROTATION;
 
 typedef enum {

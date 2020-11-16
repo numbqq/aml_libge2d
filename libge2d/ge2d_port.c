@@ -1362,6 +1362,12 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
             ge2d_config_ex->dst_xy_swap = 1;
             ge2d_config_ex->dst_para.y_rev = 1;
             break;
+        case GE2D_MIRROR_X:
+            ge2d_config_ex->src_para.x_rev = 1;
+            break;
+        case GE2D_MIRROR_Y:
+            ge2d_config_ex->src_para.y_rev = 1;
+            break;
         default:
             break;
     }
@@ -1594,6 +1600,12 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
         case GE2D_ROTATION_270:
             ge2d_config_ex->dst_xy_swap = 1;
             ge2d_config_ex->dst_para.y_rev = 1;
+            break;
+        case GE2D_MIRROR_X:
+            ge2d_config_ex->src_para.x_rev = 1;
+            break;
+        case GE2D_MIRROR_Y:
+            ge2d_config_ex->src_para.y_rev = 1;
             break;
         default:
             break;
@@ -2052,6 +2064,12 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
              ge2d_config_ex->dst_xy_swap = 1;
              ge2d_config_ex->dst_para.y_rev = 1;
              break;
+        case GE2D_MIRROR_X:
+            ge2d_config_ex->src_para.x_rev = 1;
+            break;
+        case GE2D_MIRROR_Y:
+            ge2d_config_ex->src_para.y_rev = 1;
+            break;
          default:
              break;
     }
