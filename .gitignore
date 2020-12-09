@@ -1,0 +1,4 @@
+*.o
+ge2d_chip_check
+ge2d_feature_test
+*.so
