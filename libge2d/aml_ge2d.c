@@ -53,6 +53,7 @@ static void ge2d_calculate_buffer_size(const buffer_info_t* buffer,
             }
             break;
           case PIXEL_FORMAT_YV12:
+          case PIXEL_FORMAT_YU12:
             if (buffer->plane_number == 1)
                 size_out[0] = CANVAS_ALIGNED(image_width * buffer->canvas_h * 3 / 2);
             else if (buffer->plane_number == 3) {
