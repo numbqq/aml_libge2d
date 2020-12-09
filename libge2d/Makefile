@@ -1,8 +1,10 @@
-# export CROSS_COMPILE=arm-linux-gnueabihf-
-# export CROSS_COMPILE=/opt/gcc-linaro-6.3.1-2017.02-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-
-# CC = $(CROSS_COMPILE)gcc
+export CROSS_COMPILE=aarch64-linux-gnu-
+#export CROSS_COMPILE=/opt/gcc-linaro-6.3.1-2017.02-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-
+CC = $(CROSS_COMPILE)gcc
 
 CFLAGS += -I./include/
+CFLAGS += -I../../aml_libion/include/ion/
+LIBDIR := -L../../aml_libion/
 SRC  := $(wildcard *.c)
 OBJS := $(SRC:%.c=%.o)
 .PHONY : clean all
@@ -15,8 +17,9 @@ all: $(LIB)
 	$(CC) -c -fPIC -o $@ $< $(CFLAGS)
 
 $(LIB): $(OBJS)
-	$(CC) $(CFLAGS) -shared -fPIC -lion -o $(LIB) $(OBJS)
+	$(CC) $(CFLAGS) -shared -fPIC $(LIBDIR) -lion -o $(LIB) $(OBJS)
 	@rm -f $(OBJS)
 
 clean:
 	rm -f $(LIB)
+	rm -rf *.o
