@@ -99,7 +99,18 @@ typedef enum  {
 /* if full range is used, set this flag in format */
 #define FORMAT_FULL_RANGE           (0x20000000)
 
+#define EXT_FUN_MASK               ((1 << 25) | ( 1 << 26) | ( 1 << 27) | (1 << 28))
+/* if dst x repeat is used, 2/4/8 times, set this flag in format */
+#define DST_REPEAT_2                (1 << 28)
+#define DST_REPEAT_4                (1 << 27)
+#define DST_REPEAT_8                ((1 << 28) | (1 << 27))
+
+/* if dst repeat is used, set this flag in format */
+#define DST_SIGN_MDOE               (1 << 26)
+
 /* capability flags */
+#define DST_SIGN_MODE   (1 << 8)
+#define DST_REPEAT      (1 << 7)
 #define CANVAS_STATUS   ((1 << 5) | (1 << 6))
 #define HAS_SELF_POWER  (1 << 4)
 #define DEEP_COLOR      (1 << 3)

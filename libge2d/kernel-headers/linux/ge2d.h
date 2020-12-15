@@ -311,6 +311,11 @@ struct ge2d_dmabuf_attach_s {
 	enum ge2d_data_type_e data_type;
 };
 
+#define GE2D_EXT_MASK           ((1 << 25) | (1 << 26) | (1 << 27) | (1 << 31))
+#define GE2D_DST_REPEAT_2       (1 << 31)
+#define GE2D_DST_REPEAT_4       (1 << 27)
+#define GE2D_DST_REPEAT_8       ((1 << 31) | (1 << 27))
+#define GE2D_DST_SIGN_MDOE      (1 << 26)
 
 #define GE2D_MATRIX_CUSTOM      (1 << 29)
 #define GE2D_STRIDE_CUSTOM      (1 << 30)

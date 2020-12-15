@@ -33,7 +33,7 @@
 static int  pixel_to_ge2d_format(int *img_format, int *pge2d_format,int *p_bpp)
 {
     int is_one_plane = -1;
-    unsigned int mask = ~(MATRIX_CUSTOM | STRIDE_CUSTOM | FORMAT_FULL_RANGE);
+    unsigned int mask = ~(MATRIX_CUSTOM | STRIDE_CUSTOM | FORMAT_FULL_RANGE | EXT_FUN_MASK);
 
     switch (*img_format & mask) {
         case PIXEL_FORMAT_RGBA_8888:
@@ -105,6 +105,14 @@ static int  pixel_to_ge2d_format(int *img_format, int *pge2d_format,int *p_bpp)
         *pge2d_format |= GE2D_STRIDE_CUSTOM;
     if (*img_format & FORMAT_FULL_RANGE)
         *pge2d_format |= GE2D_FORMAT_FULL_RANGE;
+    if ((*img_format & EXT_FUN_MASK) == DST_REPEAT_2)
+        *pge2d_format |= GE2D_DST_REPEAT_2;
+    if ((*img_format & EXT_FUN_MASK) == DST_REPEAT_4)
+        *pge2d_format |= GE2D_DST_REPEAT_4;
+    if ((*img_format & EXT_FUN_MASK) == DST_REPEAT_8)
+        *pge2d_format |= GE2D_DST_REPEAT_8;
+    if ((*img_format & EXT_FUN_MASK) == DST_SIGN_MDOE)
+        *pge2d_format |= GE2D_DST_SIGN_MDOE;
 
     *img_format &= mask;
 
@@ -152,7 +160,7 @@ static int is_need_swap_src2(int format,buffer_info_t *src2, buffer_info_t *dst,
                              int cap_attr)
 {
     int ret = 0;
-    unsigned int mask = ~(MATRIX_CUSTOM | STRIDE_CUSTOM | FORMAT_FULL_RANGE);
+    unsigned int mask = ~(MATRIX_CUSTOM | STRIDE_CUSTOM | FORMAT_FULL_RANGE | EXT_FUN_MASK);
 
     format &= mask;
     /* src2 not support nv21/nv12/yv12, swap src1 and src2 */

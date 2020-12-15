@@ -65,6 +65,8 @@ static int num_thread = 1;
 static int num_process_per_thread = 1;
 static int separate_step = 0;
 static int rotation_option = 0;
+static int dst_rpt_times = 0;
+static int dst_signed_mode = 0;
 
 #define THREADS_MAX_NUM (64)
 #define ATTACH_SRC      (0x1)
@@ -187,11 +189,13 @@ static void print_usage(void)
     printf ("  --src2_planenumber <num>                          define src2 plane number.\n");
     printf ("  --dst_planenumber <num>                           define dst plane number.\n");
     printf ("  --n <num>                                         process num times for performance test.\n");
-    printf ("  --p <num>                                         multi-thread process, num of threads");
+    printf ("  --p <num>                                         multi-thread process, num of threads\n");
     printf ("  --p_n <num>                                       num of process for every thread.\n");
     printf ("  --s <num>                                         separate steps. 0: invoke ge2d_process 1: invoke aml_ge2d_attach_dma_fd/ge2d_config/ge2d_execute/aml_ge2d_detach_dma_fd.\n");
-    printf ("                                                                                              or aml_ge2d_attach_dma_fd/aml_ge2d_process/aml_ge2d_detach_dma_fd");
+    printf ("                                                                                              or aml_ge2d_attach_dma_fd/aml_ge2d_process/aml_ge2d_detach_dma_fd\n");
     printf ("  --r <num>                                         rotation option, 0/1/2/3/4/5 for 0/90/180/270/H-mirror/V-mirror.\n");
+    printf ("  --dst_rpt_times <num>                             dst repeat x times, 0:disable 2/4/8:repeat times.\n");
+    printf ("  --dst_signed_mode <num>                           dst signed mode, 0:disable 1:enable.\n");
     printf ("  --help                                            Print usage information.\n");
     printf ("\n");
 }
@@ -347,7 +351,40 @@ static int parse_command_line(int argc, char *argv[])
                 sscanf (argv[i], "%d", &separate_step) == 1) {
                 continue;
             }
-
+            else if (strcmp (argv[i] + 2, "dst_rpt_times") == 0 && ++i < argc &&
+                sscanf (argv[i], "%d", &dst_rpt_times) == 1) {
+                switch (dst_rpt_times) {
+                case 0: /* do nothing if dst_rpt_times is 0 */
+                    break;
+                case 2:
+                    DST_PIXFORMAT |= DST_REPEAT_2;
+                    break;
+                case 4:
+                    DST_PIXFORMAT |= DST_REPEAT_4;
+                    break;
+                case 8:
+                    DST_PIXFORMAT |= DST_REPEAT_8;
+                    break;
+                default:
+                    E_GE2D("dst_rpt_times should be 0/2/4/8\n");
+                    break;
+                }
+                continue;
+            }
+            else if (strcmp (argv[i] + 2, "dst_signed_mode") == 0 && ++i < argc &&
+                sscanf (argv[i], "%d", &dst_signed_mode) == 1) {
+                switch (dst_signed_mode) {
+                case 0: /* do nothing if dst_signed_mode is 0 */
+                    break;
+                case 1:
+                    DST_PIXFORMAT |= DST_SIGN_MDOE;
+                    break;
+                default:
+                    E_GE2D("dst_signed_mode should be 0 or 1\n");
+                    break;
+                }
+                continue;
+            }
         }
     }
     return ge2d_success;
