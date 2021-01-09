@@ -327,8 +327,7 @@ static int check_plane_number(int plane_number, int format)
             (format == PIXEL_FORMAT_YCbCr_422_SP))
             ret = 0;
     } else if (plane_number == 3) {
-        if ((format == PIXEL_FORMAT_YV12) ||
-            (format == PIXEL_FORMAT_YU12))
+        if (format == PIXEL_FORMAT_YV12)
             ret = 0;
     }
     return ret;
