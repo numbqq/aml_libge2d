@@ -27,7 +27,7 @@
 static void ge2d_calculate_buffer_size(const buffer_info_t* buffer,
                                        unsigned int* size_out)
 {
-    unsigned int mask = ~MATRIX_CUSTOM;
+    unsigned int mask = ~(MATRIX_CUSTOM | STRIDE_CUSTOM | FORMAT_FULL_RANGE);
     unsigned int image_width = buffer->canvas_w;
 
     switch (buffer->format & mask) {
@@ -154,7 +154,7 @@ int aml_ge2d_init(aml_ge2d_t *pge2d)
 {
     int ret = -1, fd_ge2d, ion_fd, i;
 
-    for (i = 0; i < MAX_PLANE; i++) {
+    for (i = 0; i < GE2D_MAX_PLANE; i++) {
         pge2d->ge2dinfo.src_info[0].shared_fd[i] = -1;
         pge2d->ge2dinfo.src_info[1].shared_fd[i] = -1;
         pge2d->ge2dinfo.dst_info.shared_fd[i] = -1;
@@ -397,14 +397,53 @@ exit:
 int aml_ge2d_process(aml_ge2d_info_t *pge2dinfo)
 {
     int ret = -1;
+
     if (pge2dinfo->ge2d_fd >= 0)
         ret = ge2d_process(pge2dinfo->ge2d_fd, pge2dinfo);
+
+    return ret;
+}
+
+int aml_ge2d_attach_dma_fd(aml_ge2d_info_t *pge2dinfo,
+                           enum ge2d_data_type_e data_type)
+{
+    int ret = -1;
+
+    if (pge2dinfo->ge2d_fd >= 0)
+        ret = ge2d_attach_dma_fd(pge2dinfo->ge2d_fd, pge2dinfo, data_type);
+
+    return ret;
+}
+
+void aml_ge2d_detach_dma_fd(aml_ge2d_info_t *pge2dinfo,
+                            enum ge2d_data_type_e data_type)
+{
+    if (pge2dinfo->ge2d_fd >= 0)
+        ge2d_detach_dma_fd(pge2dinfo->ge2d_fd, data_type);
+}
+
+int aml_ge2d_config(aml_ge2d_info_t *pge2dinfo)
+{
+    int ret = -1;
+
+    if (pge2dinfo->ge2d_fd >= 0)
+        ret = ge2d_config(pge2dinfo->ge2d_fd, pge2dinfo);
+    return ret;
+}
+
+int aml_ge2d_execute(aml_ge2d_info_t *pge2dinfo)
+{
+    int ret = -1;
+
+    if (pge2dinfo->ge2d_fd >= 0)
+        ret = ge2d_execute(pge2dinfo->ge2d_fd, pge2dinfo);
     return ret;
 }
 
 int aml_ge2d_process_ion(aml_ge2d_info_t *pge2dinfo)
 {
     int ret = -1;
+
     if (pge2dinfo->ge2d_fd >= 0)
         ret = ge2d_process_ion(pge2dinfo->ge2d_fd, pge2dinfo);
     return ret;
@@ -428,3 +467,13 @@ int  aml_ge2d_invalid_cache(aml_ge2d_info_t *pge2dinfo)
     return 0;
 }
 
+void aml_ge2d_sync_for_device(aml_ge2d_info_t *pge2dinfo, int src_id)
+{
+    sync_src_dmabuf_to_device(pge2dinfo, src_id);
+}
+
+/* src_id:  0 or 1, for first src and seconf src */
+void aml_ge2d_sync_for_cpu(aml_ge2d_info_t *pge2dinfo)
+{
+    sync_dst_dmabuf_to_cpu(pge2dinfo);
+}

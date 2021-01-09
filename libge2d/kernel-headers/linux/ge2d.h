@@ -56,6 +56,9 @@
 #define  GE2D_SET_COEF              0x46fb
 #define  GE2D_ANTIFLICKER_ENABLE    0x46f8
 
+/* Indicates that dma fd has been attatched using ioctl GE2D_ATTACH_DMA_FD */
+#define DMA_FD_ATTACHED     (-2)
+
 typedef enum {
     OSD0_OSD0 = 0,
     OSD0_OSD1,
@@ -96,8 +99,6 @@ struct config_para_s {
     struct config_planes_s dst_planes[4];
     struct src_key_ctrl_s  src_key;
 };
-
-
 
 struct rectangle_s {
     int x;   /* X coordinate of its top-left point */
@@ -282,6 +283,8 @@ struct config_para_ex_memtype_s {
 	unsigned int dst_mem_alloc_type;
 	/* for customized matrix */
 	struct ge2d_matrix_s matrix_custom;
+	/* for customized stride */
+	struct ge2d_stride_s stride_custom;
 };
 
 struct config_ge2d_para_ex_s {
@@ -303,7 +306,14 @@ struct ge2d_dmabuf_exp_s {
 	int fd;
 };
 
+struct ge2d_dmabuf_attach_s {
+	int dma_fd[GE2D_MAX_PLANE];
+	enum ge2d_data_type_e data_type;
+};
+
+
 #define GE2D_MATRIX_CUSTOM      (1 << 29)
+#define GE2D_STRIDE_CUSTOM      (1 << 30)
 
 #define GE2D_ENDIAN_SHIFT       24
 #define GE2D_ENDIAN_MASK        (0x1 << GE2D_ENDIAN_SHIFT)
@@ -388,7 +398,7 @@ struct ge2d_dmabuf_exp_s {
 #define GE2D_BPP_32BIT                  0x00300
 #define GE2D_FORMAT_DEEP_COLOR   0x40000
 #define GE2D_FORMAT_YUV                 0x20000
-#define GE2D_FORMAT_COMP_RANGE          0x10000
+#define GE2D_FORMAT_FULL_RANGE          0x10000
 /*bit8(2)  format   bi6(2) mode_8b_sel  bit5(1)lut_en   bit2 sep_en*/
 /*M  separate block S one block.*/
 
@@ -526,5 +536,8 @@ struct ge2d_dmabuf_exp_s {
 
 #define GE2D_SYNC_DEVICE _IOW(GE2D_IOC_MAGIC, 0x08, int)
 #define GE2D_SYNC_CPU _IOW(GE2D_IOC_MAGIC, 0x09, int)
-
+#define GE2D_ATTACH_DMA_FD   \
+	_IOW(GE2D_IOC_MAGIC, 0x0a, struct ge2d_dmabuf_attach_s)
+#define GE2D_DETACH_DMA_FD   \
+	_IOW(GE2D_IOC_MAGIC, 0x0b, enum ge2d_data_type_e)
 #endif /* GE2D_H */

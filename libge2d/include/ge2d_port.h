@@ -29,7 +29,15 @@
 extern "C" {
 #endif
 
-#define MAX_PLANE  4
+#define GE2D_MAX_PLANE  4
+
+enum ge2d_data_type_e {
+    AML_GE2D_SRC,
+    AML_GE2D_SRC2,
+    AML_GE2D_DST,
+    AML_GE2D_TYPE_INVALID,
+};
+
 typedef enum {
     GE2D_CANVAS_OSD0 = 0,
     GE2D_CANVAS_OSD1,
@@ -73,11 +81,11 @@ typedef enum  {
     PIXEL_FORMAT_RGB_888            = 3,
     PIXEL_FORMAT_RGB_565            = 4,
     PIXEL_FORMAT_BGRA_8888          = 5,
-    PIXEL_FORMAT_YV12               = 0x32315659,  // YCrCb 4:2:0 Planar  YYYY......  U......V......,actually is is YU12
-    PIXEL_FORMAT_Y8                 = 0x20203859,  // YYYY
+    PIXEL_FORMAT_YV12               = 6,           // YCrCb 4:2:0 Planar  YYYY......  U......V......,actually is is YU12
+    PIXEL_FORMAT_Y8                 = 7,           // YYYY
     PIXEL_FORMAT_YCbCr_422_SP       = 0x10,        // NV16   YYYY.....UVUV....
     PIXEL_FORMAT_YCrCb_420_SP       = 0x11,        // NV21   YCrCb YYYY.....VU....
-    PIXEL_FORMAT_YCbCr_422_UYVY        = 0x14,     // UYVY   U0-Y0-V0-Y1 U2-Y2-V2-Y3 U4 ...
+    PIXEL_FORMAT_YCbCr_422_UYVY     = 0x14,        // UYVY   U0-Y0-V0-Y1 U2-Y2-V2-Y3 U4 ...
     PIXEL_FORMAT_BGR_888,
     PIXEL_FORMAT_YCbCr_420_SP_NV12,                // NV12 YCbCr YYYY.....UV....
 } pixel_format_t;
@@ -85,11 +93,27 @@ typedef enum  {
 /* if customized matrix is used, set this flag in format */
 #define MATRIX_CUSTOM               (0x80000000)
 
+/* if customized stride is used, set this flag in format */
+#define STRIDE_CUSTOM               (0x40000000)
+
+/* if full range is used, set this flag in format */
+#define FORMAT_FULL_RANGE           (0x20000000)
+
+/* capability flags */
+#define CANVAS_STATUS   ((1 << 5) | (1 << 6))
+#define HAS_SELF_POWER  (1 << 4)
+#define DEEP_COLOR      (1 << 3)
+#define ADVANCED_MATRIX (1 << 2)
+#define SRC2_REPEAT     (1 << 1)
+#define SRC2_ALPHA      (1 << 0)
+
 typedef enum {
     GE2D_ROTATION_0,
     GE2D_ROTATION_90,
     GE2D_ROTATION_180,
     GE2D_ROTATION_270,
+    GE2D_MIRROR_X,
+    GE2D_MIRROR_Y,
 } GE2D_ROTATION;
 
 typedef enum {
@@ -110,14 +134,14 @@ typedef struct{
 typedef struct buffer_info {
     unsigned int mem_alloc_type;
     unsigned int memtype;
-    char* vaddr[MAX_PLANE];
-    unsigned long offset[MAX_PLANE];
+    char* vaddr[GE2D_MAX_PLANE];
+    unsigned long offset[GE2D_MAX_PLANE];
     unsigned int canvas_w;
     unsigned int canvas_h;
     rectangle_t rect;
     int format;
     unsigned int rotation;
-    int shared_fd[MAX_PLANE];
+    int shared_fd[GE2D_MAX_PLANE];
     unsigned char plane_alpha;
     unsigned char layer_mode;
     unsigned char fill_color_en;
@@ -145,6 +169,12 @@ struct ge2d_matrix_s {
 	unsigned char sat_in_en;
 };
 
+struct ge2d_stride_s {
+	unsigned int src1_stride[GE2D_MAX_PLANE];
+	unsigned int src2_stride[GE2D_MAX_PLANE];
+	unsigned int dst_stride[GE2D_MAX_PLANE];
+};
+
 typedef struct aml_ge2d_info {
     int ge2d_fd;     /* ge2d_fd */
     int ion_fd; /* ion_fd */
@@ -161,6 +191,7 @@ typedef struct aml_ge2d_info {
     int cap_attr;
     int b_src_swap;
     struct ge2d_matrix_s matrix_custom;
+    struct ge2d_stride_s stride_custom;
     unsigned int reserved;
 } aml_ge2d_info_t;
 
@@ -168,7 +199,17 @@ int ge2d_open(void);
 int ge2d_close(int fd);
 int ge2d_get_cap(int fd);
 int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo);
+int ge2d_attach_dma_fd(int fd, aml_ge2d_info_t *pge2dinfo,
+		       enum ge2d_data_type_e data_type);
+int ge2d_config(int fd,aml_ge2d_info_t *pge2dinfo);
+int ge2d_execute(int fd,aml_ge2d_info_t *pge2dinfo);
+void ge2d_detach_dma_fd(int fd, enum ge2d_data_type_e data_type);
+/* for dst buffer */
+void sync_dst_dmabuf_to_cpu(aml_ge2d_info_t *pge2dinfo);
+/* for src0 or src1, use src_id to config */
+void sync_src_dmabuf_to_device(aml_ge2d_info_t *pge2dinfo, int src_id);
 int ge2d_process_ion(int fd,aml_ge2d_info_t *pge2dinfo);
+
 #if defined (__cplusplus)
 }
 #endif
