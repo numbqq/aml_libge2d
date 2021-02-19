@@ -88,6 +88,8 @@ typedef enum  {
     PIXEL_FORMAT_YCbCr_422_UYVY     = 0x14,        // UYVY   U0-Y0-V0-Y1 U2-Y2-V2-Y3 U4 ...
     PIXEL_FORMAT_BGR_888,
     PIXEL_FORMAT_YCbCr_420_SP_NV12,                // NV12 YCbCr YYYY.....UV....
+    PIXEL_FORMAT_ARGB_8888,
+    PIXEL_FORMAT_ABGR_8888,
 } pixel_format_t;
 
 /* if customized matrix is used, set this flag in format */

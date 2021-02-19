@@ -42,6 +42,16 @@ static int  pixel_to_ge2d_format(int *img_format, int *pge2d_format,int *p_bpp)
         *p_bpp = GE2D_BPP_32;
         is_one_plane = 1;
         break;
+        case PIXEL_FORMAT_ARGB_8888:
+        *pge2d_format = GE2D_FORMAT_S32_BGRA;
+        *p_bpp = GE2D_BPP_32;
+        is_one_plane = 1;
+        break;
+        case PIXEL_FORMAT_ABGR_8888:
+        *pge2d_format = GE2D_FORMAT_S32_RGBA;
+        *p_bpp = GE2D_BPP_32;
+        is_one_plane = 1;
+        break;
         case PIXEL_FORMAT_BGRA_8888:
         *pge2d_format = GE2D_FORMAT_S32_ARGB;
         *p_bpp = GE2D_BPP_32;
@@ -208,6 +218,8 @@ static int get_dst_op_number(aml_ge2d_info_t *pge2dinfo)
     switch (dst_format) {
     case PIXEL_FORMAT_RGBA_8888:
     case PIXEL_FORMAT_RGBX_8888:
+    case PIXEL_FORMAT_ARGB_8888:
+    case PIXEL_FORMAT_ABGR_8888:
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_RGB_565:
     case PIXEL_FORMAT_BGRA_8888:
@@ -632,6 +644,8 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
         switch (output_buffer_info->format) {
         case PIXEL_FORMAT_RGBA_8888:
         case PIXEL_FORMAT_RGBX_8888:
+        case PIXEL_FORMAT_ARGB_8888:
+        case PIXEL_FORMAT_ABGR_8888:
         case PIXEL_FORMAT_RGB_888:
         case PIXEL_FORMAT_BGR_888:
         case PIXEL_FORMAT_RGB_565:
@@ -1717,6 +1731,8 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
         switch (output_buffer_info->format) {
         case PIXEL_FORMAT_RGBA_8888:
         case PIXEL_FORMAT_RGBX_8888:
+        case PIXEL_FORMAT_ARGB_8888:
+        case PIXEL_FORMAT_ABGR_8888:
         case PIXEL_FORMAT_RGB_888:
         case PIXEL_FORMAT_BGR_888:
         case PIXEL_FORMAT_RGB_565:
@@ -2445,6 +2461,8 @@ static int ge2d_blit(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *rect,unsigne
     switch (dst_format) {
     case PIXEL_FORMAT_RGBA_8888:
     case PIXEL_FORMAT_RGBX_8888:
+    case PIXEL_FORMAT_ARGB_8888:
+    case PIXEL_FORMAT_ABGR_8888:
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888:
     case PIXEL_FORMAT_RGB_565:
@@ -2511,6 +2529,8 @@ static int ge2d_blit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *rect
     switch (dst_format) {
     case PIXEL_FORMAT_RGBA_8888:
     case PIXEL_FORMAT_RGBX_8888:
+    case PIXEL_FORMAT_ARGB_8888:
+    case PIXEL_FORMAT_ABGR_8888:
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888:
     case PIXEL_FORMAT_RGB_565:
@@ -2575,6 +2595,8 @@ static int ge2d_strechblit(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *srect,
     switch (dst_format) {
     case PIXEL_FORMAT_RGBA_8888:
     case PIXEL_FORMAT_RGBX_8888:
+    case PIXEL_FORMAT_ARGB_8888:
+    case PIXEL_FORMAT_ABGR_8888:
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888:
     case PIXEL_FORMAT_RGB_565:
@@ -2639,6 +2661,8 @@ static int ge2d_strechblit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t
     switch (dst_format) {
     case PIXEL_FORMAT_RGBA_8888:
     case PIXEL_FORMAT_RGBX_8888:
+    case PIXEL_FORMAT_ARGB_8888:
+    case PIXEL_FORMAT_ABGR_8888:
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888:
     case PIXEL_FORMAT_RGB_565:

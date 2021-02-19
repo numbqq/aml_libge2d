@@ -631,7 +631,12 @@ static int do_fill_rectangle(aml_ge2d_t *amlge2d)
     pge2dinfo->dst_info.rect.y = dst_rect_y;
     pge2dinfo->dst_info.rect.w = dst_rect_w;
     pge2dinfo->dst_info.rect.h = dst_rect_h;
+
     ret = do_cmd(pge2dinfo);
+
+    /* if ge2d as dmabuf exporter, use the below interface to invalid cache */
+    if (pge2dinfo->dst_info.mem_alloc_type == AML_GE2D_MEM_DMABUF)
+        aml_ge2d_sync_for_cpu(pge2dinfo);
     #if 0
     sleep(5);
 
@@ -690,7 +695,17 @@ static int do_blend(aml_ge2d_t *amlge2d)
         pge2dinfo->src_info[0].plane_alpha = gb1_alpha;
         pge2dinfo->src_info[1].plane_alpha = gb2_alpha;
 
-        ret = do_cmd(pge2dinfo);
+    /* if ge2d as dmabuf exporter, use the below interface to sync cache */
+    if (pge2dinfo->src_info[0].mem_alloc_type == AML_GE2D_MEM_DMABUF)
+        aml_ge2d_sync_for_device(pge2dinfo, 0);
+    if (pge2dinfo->src_info[1].mem_alloc_type == AML_GE2D_MEM_DMABUF)
+        aml_ge2d_sync_for_device(pge2dinfo, 1);
+
+    ret = do_cmd(pge2dinfo);
+
+    /* if ge2d as dmabuf exporter, use the below interface to invalid cache */
+    if (pge2dinfo->dst_info.mem_alloc_type == AML_GE2D_MEM_DMABUF)
+        aml_ge2d_sync_for_cpu(pge2dinfo);
     } else {
         if (((gb1_alpha != 0xff)
         && (gb2_alpha != 0xff))){
@@ -1093,7 +1108,17 @@ static int do_strechblit(aml_ge2d_t *amlge2d)
     pge2dinfo->src_info[0].layer_mode = src1_layer_mode;
     pge2dinfo->src_info[0].plane_alpha = gb1_alpha;
 
+    /* if ge2d as dmabuf exporter, use the below interface to sync cache */
+    if (pge2dinfo->src_info[0].mem_alloc_type == AML_GE2D_MEM_DMABUF)
+        aml_ge2d_sync_for_device(pge2dinfo, 0);
+    if (pge2dinfo->src_info[1].mem_alloc_type == AML_GE2D_MEM_DMABUF)
+        aml_ge2d_sync_for_device(pge2dinfo, 1);
+
     ret = do_cmd(pge2dinfo);
+
+    /* if ge2d as dmabuf exporter, use the below interface to invalid cache */
+    if (pge2dinfo->dst_info.mem_alloc_type == AML_GE2D_MEM_DMABUF)
+        aml_ge2d_sync_for_cpu(pge2dinfo);
 
     #if 0
     sleep(5);
@@ -1133,7 +1158,17 @@ static int do_blit(aml_ge2d_t *amlge2d)
     pge2dinfo->src_info[0].layer_mode = src1_layer_mode;
     pge2dinfo->src_info[0].plane_alpha = gb1_alpha;
 
+    /* if ge2d as dmabuf exporter, use the below interface to sync cache */
+    if (pge2dinfo->src_info[0].mem_alloc_type == AML_GE2D_MEM_DMABUF)
+        aml_ge2d_sync_for_device(pge2dinfo, 0);
+    if (pge2dinfo->src_info[1].mem_alloc_type == AML_GE2D_MEM_DMABUF)
+        aml_ge2d_sync_for_device(pge2dinfo, 1);
+
     ret = do_cmd(pge2dinfo);
+
+    /* if ge2d as dmabuf exporter, use the below interface to invalid cache */
+    if (pge2dinfo->dst_info.mem_alloc_type == AML_GE2D_MEM_DMABUF)
+        aml_ge2d_sync_for_cpu(pge2dinfo);
 
     #if 0
     sleep(5);
