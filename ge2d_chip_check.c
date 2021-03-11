@@ -44,16 +44,21 @@ static void set_ge2dinfo(aml_ge2d_info_t *pge2dinfo)
     pge2dinfo->src_info[0].canvas_w = SX_SRC1;
     pge2dinfo->src_info[0].canvas_h = SY_SRC1;
     pge2dinfo->src_info[0].format = SRC1_PIXFORMAT;
+    pge2dinfo->src_info[0].plane_number = 1;
+
     pge2dinfo->src_info[1].memtype = GE2D_CANVAS_ALLOC;
     pge2dinfo->src_info[1].canvas_w = SX_SRC2;
     pge2dinfo->src_info[1].canvas_h = SY_SRC2;
     pge2dinfo->src_info[1].format = SRC2_PIXFORMAT;
+    pge2dinfo->src_info[1].plane_number = 1;
 
     pge2dinfo->dst_info.memtype = GE2D_CANVAS_ALLOC;
     pge2dinfo->dst_info.canvas_w = SX_DST;
     pge2dinfo->dst_info.canvas_h = SY_DST;
     pge2dinfo->dst_info.format = DST_PIXFORMAT;
     pge2dinfo->dst_info.rotation = GE2D_ROTATION_0;
+    pge2dinfo->dst_info.plane_number = 1;
+
     pge2dinfo->offset = 0;
     pge2dinfo->ge2d_op = OP;
     pge2dinfo->blend_mode = BLEND_MODE_PREMULTIPLIED;
