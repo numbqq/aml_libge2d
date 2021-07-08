@@ -82,7 +82,8 @@ static int  pixel_to_ge2d_format(int *img_format, int *pge2d_format,int *p_bpp)
         *p_bpp = GE2D_BPP_8;
         is_one_plane = 0;
         break;
-        case  PIXEL_FORMAT_YV12:
+        case PIXEL_FORMAT_YV12:
+        case PIXEL_FORMAT_YU12:
         *pge2d_format = GE2D_FORMAT_M24_YUV420;
         *p_bpp = GE2D_BPP_8;
         is_one_plane = 0;
@@ -158,6 +159,7 @@ static int is_no_alpha(int format)
         (format == PIXEL_FORMAT_YCbCr_420_SP_NV12) ||
         (format == PIXEL_FORMAT_Y8) ||
         (format == PIXEL_FORMAT_YV12) ||
+        (format == PIXEL_FORMAT_YU12) ||
         (format == PIXEL_FORMAT_YCbCr_422_SP) ||
         (format == PIXEL_FORMAT_YCbCr_422_UYVY) ||
         (format == PIXEL_FORMAT_BGR_888))
@@ -176,7 +178,8 @@ static int is_need_swap_src2(int format,buffer_info_t *src2, buffer_info_t *dst,
     /* src2 not support nv21/nv12/yv12, swap src1 and src2 */
     if ((format == PIXEL_FORMAT_YCrCb_420_SP) ||
         (format == PIXEL_FORMAT_YCbCr_420_SP_NV12) ||
-        (format == PIXEL_FORMAT_YV12))
+        (format == PIXEL_FORMAT_YV12) ||
+        (format == PIXEL_FORMAT_YU12))
         ret = 1;
     else
         ret = 0;
@@ -213,8 +216,9 @@ static int get_dst_op_number(aml_ge2d_info_t *pge2dinfo)
 {
     int dst_format;
     int op_number;
+    unsigned int mask = ~(MATRIX_CUSTOM | STRIDE_CUSTOM | FORMAT_FULL_RANGE | EXT_FUN_MASK);
 
-    dst_format = pge2dinfo->dst_info.format;
+    dst_format = pge2dinfo->dst_info.format & mask;
     switch (dst_format) {
     case PIXEL_FORMAT_RGBA_8888:
     case PIXEL_FORMAT_RGBX_8888:
@@ -232,6 +236,7 @@ static int get_dst_op_number(aml_ge2d_info_t *pge2dinfo)
         op_number = 1;
         break;
     case PIXEL_FORMAT_YV12:
+    case PIXEL_FORMAT_YU12:
         op_number = 3;
         break;
     default:
@@ -353,7 +358,8 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
             ge2d_config_ex.dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
             ge2d_config_ex.dst_planes[0].w = d_canvas_w;
             ge2d_config_ex.dst_planes[0].h = d_canvas_h;
-        } else if (output_buffer_info->format == PIXEL_FORMAT_YV12) {
+        } else if (output_buffer_info->format == PIXEL_FORMAT_YV12 ||
+                   output_buffer_info->format == PIXEL_FORMAT_YU12) {
             switch (pge2dinfo->dst_op_cnt) {
             case 0:
                 ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_Y | GE2D_LITTLE_ENDIAN;
@@ -365,7 +371,10 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex.dst_para.height = d_canvas_h;
                 break;
             case 1:
-                ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                if (output_buffer_info->format == PIXEL_FORMAT_YV12)
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                else
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex.dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex.dst_para.width = d_canvas_w/2;
@@ -380,7 +389,10 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 }
                 break;
             case 2:
-                ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                if (output_buffer_info->format == PIXEL_FORMAT_YV12)
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                else
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex.dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex.dst_para.width = d_canvas_w/2;
@@ -612,6 +624,39 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
                     D_GE2D("yv12 src canvas_w not alligned\n ");
             }
+        } else if (input_buffer_info->format == PIXEL_FORMAT_YU12) {
+            if (input_buffer_info->plane_number == 1) {
+            ge2d_config_ex.src_planes[0].addr = input_buffer_info->offset[0];
+            ge2d_config_ex.src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
+            ge2d_config_ex.src_planes[0].w = s_canvas_w;
+            ge2d_config_ex.src_planes[0].h = s_canvas_h;
+            ge2d_config_ex.src_planes[1].addr = YV12_Y_ALIGNED(s_canvas_w) * s_canvas_h;
+            ge2d_config_ex.src_planes[1].shared_fd = 0;
+            ge2d_config_ex.src_planes[1].w = CANVAS_ALIGNED(s_canvas_w/2);
+            ge2d_config_ex.src_planes[1].h = s_canvas_h/2;
+            ge2d_config_ex.src_planes[2].addr = YV12_Y_ALIGNED(s_canvas_w) *
+                s_canvas_h + CANVAS_ALIGNED(s_canvas_w/2) * s_canvas_h/2;
+            ge2d_config_ex.src_planes[2].shared_fd = 0;
+            ge2d_config_ex.src_planes[2].w = CANVAS_ALIGNED(s_canvas_w/2);
+            ge2d_config_ex.src_planes[2].h = s_canvas_h/2;
+            if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
+                D_GE2D("yu12 src canvas_w not alligned\n ");
+            } else if (input_buffer_info->plane_number == 3) {
+                ge2d_config_ex.src_planes[0].addr = input_buffer_info->offset[0];
+                ge2d_config_ex.src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
+                ge2d_config_ex.src_planes[0].w = s_canvas_w;
+                ge2d_config_ex.src_planes[0].h = s_canvas_h;
+                ge2d_config_ex.src_planes[1].addr = input_buffer_info->offset[1];
+                ge2d_config_ex.src_planes[1].shared_fd = input_buffer_info->shared_fd[1];
+                ge2d_config_ex.src_planes[1].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex.src_planes[1].h = s_canvas_h/2;
+                ge2d_config_ex.src_planes[2].addr = input_buffer_info->offset[2];
+                ge2d_config_ex.src_planes[2].shared_fd = input_buffer_info->shared_fd[2];
+                ge2d_config_ex.src_planes[2].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex.src_planes[2].h = s_canvas_h/2;
+                if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
+                    D_GE2D("yu12 src canvas_w not alligned\n ");
+            }
         } else if (input_buffer_info->format == PIXEL_FORMAT_YCbCr_422_SP) {
             if (input_buffer_info->plane_number == 1) {
                 ge2d_config_ex.src_planes[0].addr = input_buffer_info->offset[0];
@@ -660,6 +705,7 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
             }
             break;
         case PIXEL_FORMAT_YV12:
+        case PIXEL_FORMAT_YU12:
             switch (pge2dinfo->dst_op_cnt) {
             case 0:
                 ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_Y | GE2D_LITTLE_ENDIAN;
@@ -671,7 +717,11 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex.dst_para.height = d_canvas_h;
                 break;
             case 1:
-                ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                if (output_buffer_info->format == PIXEL_FORMAT_YV12)
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                else {
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                }
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex.dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex.dst_para.width = d_canvas_w/2;
@@ -686,7 +736,11 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 }
                 break;
             case 2:
-                ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                if (output_buffer_info->format == PIXEL_FORMAT_YV12)
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                else {
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                }
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex.dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex.dst_para.width = d_canvas_w/2;
@@ -1047,6 +1101,39 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
                     D_GE2D("yv12 src canvas_w not alligned\n ");
             }
+        } else if (input_buffer_info->format == PIXEL_FORMAT_YU12) {
+            if (input_buffer_info->plane_number == 1) {
+                ge2d_config_ex.src_planes[0].addr = input_buffer_info->offset[0];
+                ge2d_config_ex.src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
+                ge2d_config_ex.src_planes[0].w = s_canvas_w;
+                ge2d_config_ex.src_planes[0].h = s_canvas_h;
+                ge2d_config_ex.src_planes[1].addr = YV12_Y_ALIGNED(s_canvas_w) * s_canvas_h;
+                ge2d_config_ex.src_planes[1].shared_fd = 0;
+                ge2d_config_ex.src_planes[1].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex.src_planes[1].h = s_canvas_h/2;
+                ge2d_config_ex.src_planes[2].addr = YV12_Y_ALIGNED(s_canvas_w) *
+                    s_canvas_h + CANVAS_ALIGNED(s_canvas_w/2 ) * s_canvas_h/2;
+                ge2d_config_ex.src_planes[2].shared_fd = 0;
+                ge2d_config_ex.src_planes[2].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex.src_planes[2].h = s_canvas_h/2;
+                if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
+                    D_GE2D("yu12 src canvas_w not alligned\n ");
+            } else if (input_buffer_info->plane_number == 3) {
+                ge2d_config_ex.src_planes[0].addr = input_buffer_info->offset[0];
+                ge2d_config_ex.src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
+                ge2d_config_ex.src_planes[0].w = s_canvas_w;
+                ge2d_config_ex.src_planes[0].h = s_canvas_h;
+                ge2d_config_ex.src_planes[1].addr = input_buffer_info->offset[1];
+                ge2d_config_ex.src_planes[1].shared_fd = input_buffer_info->shared_fd[1];
+                ge2d_config_ex.src_planes[1].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex.src_planes[1].h = s_canvas_h/2;
+                ge2d_config_ex.src_planes[2].addr = input_buffer_info->offset[2];
+                ge2d_config_ex.src_planes[2].shared_fd = input_buffer_info->shared_fd[2];
+                ge2d_config_ex.src_planes[2].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex.src_planes[2].h = s_canvas_h/2;
+                if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
+                    D_GE2D("yu12 src canvas_w not alligned\n ");
+            }
         } else if (input_buffer_info->format == PIXEL_FORMAT_YCbCr_422_SP) {
             if (input_buffer_info->plane_number == 1) {
                 ge2d_config_ex.src_planes[0].addr = input_buffer_info->offset[0];
@@ -1141,6 +1228,39 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
                     D_GE2D("yv12 src2 canvas_w not alligned\n ");
             }
+        } else if (input2_buffer_info->format == PIXEL_FORMAT_YU12) {
+            if (input2_buffer_info->plane_number == 1) {
+                ge2d_config_ex.src2_planes[0].addr = input2_buffer_info->offset[0];
+                ge2d_config_ex.src2_planes[0].shared_fd = input2_buffer_info->shared_fd[0];
+                ge2d_config_ex.src2_planes[0].w = s2_canvas_w;
+                ge2d_config_ex.src2_planes[0].h = s2_canvas_h;
+                ge2d_config_ex.src2_planes[1].addr = YV12_Y_ALIGNED(s2_canvas_w) * s2_canvas_h;
+                ge2d_config_ex.src2_planes[1].shared_fd = 0;
+                ge2d_config_ex.src2_planes[1].w = CANVAS_ALIGNED(s2_canvas_w/2);
+                ge2d_config_ex.src2_planes[1].h = s2_canvas_h/2;
+                ge2d_config_ex.src2_planes[2].addr = YV12_Y_ALIGNED(s2_canvas_w) *
+                    s2_canvas_h + CANVAS_ALIGNED(s2_canvas_w/2)* s2_canvas_h/2;
+                ge2d_config_ex.src2_planes[2].shared_fd = 0;
+                ge2d_config_ex.src2_planes[2].w = CANVAS_ALIGNED(s2_canvas_w/2);
+                ge2d_config_ex.src2_planes[2].h = s2_canvas_h/2;
+                if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
+                    D_GE2D("yu12 src2 canvas_w not alligned\n ");
+            } else if (input2_buffer_info->plane_number == 3) {
+                ge2d_config_ex.src2_planes[0].addr = input2_buffer_info->offset[0];
+                ge2d_config_ex.src2_planes[0].shared_fd = input2_buffer_info->shared_fd[0];
+                ge2d_config_ex.src2_planes[0].w = s2_canvas_w;
+                ge2d_config_ex.src2_planes[0].h = s2_canvas_h;
+                ge2d_config_ex.src2_planes[1].addr = input2_buffer_info->offset[1];
+                ge2d_config_ex.src2_planes[1].shared_fd = input2_buffer_info->shared_fd[1];
+                ge2d_config_ex.src2_planes[1].w = CANVAS_ALIGNED(s2_canvas_w/2);
+                ge2d_config_ex.src2_planes[1].h = s2_canvas_h/2;
+                ge2d_config_ex.src2_planes[2].addr = input2_buffer_info->offset[2];
+                ge2d_config_ex.src2_planes[2].shared_fd = input2_buffer_info->shared_fd[2];
+                ge2d_config_ex.src2_planes[2].w = CANVAS_ALIGNED(s2_canvas_w/2);
+                ge2d_config_ex.src2_planes[2].h = s2_canvas_h/2;
+                if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
+                    D_GE2D("yu12 src2 canvas_w not alligned\n ");
+            }
         } else if (input2_buffer_info->format == PIXEL_FORMAT_YCbCr_422_SP) {
             if (input2_buffer_info->plane_number == 1) {
                 ge2d_config_ex.src2_planes[0].addr = input2_buffer_info->offset[0];
@@ -1199,7 +1319,8 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
             ge2d_config_ex.dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
             ge2d_config_ex.dst_planes[0].w = d_canvas_w;
             ge2d_config_ex.dst_planes[0].h = d_canvas_h;
-        } else if (output_buffer_info->format == PIXEL_FORMAT_YV12) {
+        } else if (output_buffer_info->format == PIXEL_FORMAT_YV12 ||
+                   output_buffer_info->format == PIXEL_FORMAT_YU12) {
             switch (pge2dinfo->dst_op_cnt) {
             case 0:
                 ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_Y | GE2D_LITTLE_ENDIAN;
@@ -1211,7 +1332,10 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex.dst_para.height = d_canvas_h;
                 break;
             case 1:
-                ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                if (output_buffer_info->format == PIXEL_FORMAT_YV12)
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                else
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex.dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex.dst_para.width = d_canvas_w/2;
@@ -1226,7 +1350,10 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 }
                 break;
             case 2:
-                ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                if (output_buffer_info->format == PIXEL_FORMAT_YV12)
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                else
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex.dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex.dst_para.width = d_canvas_w/2;
@@ -1426,7 +1553,8 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
             ge2d_config_ex->dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
             ge2d_config_ex->dst_planes[0].w = d_canvas_w;
             ge2d_config_ex->dst_planes[0].h = d_canvas_h;
-        } else if (output_buffer_info->format == PIXEL_FORMAT_YV12) {
+        } else if (output_buffer_info->format == PIXEL_FORMAT_YV12 ||
+                   output_buffer_info->format == PIXEL_FORMAT_YU12) {
             switch (pge2dinfo->dst_op_cnt) {
             case 0:
                 ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_Y | GE2D_LITTLE_ENDIAN;
@@ -1438,7 +1566,10 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex->dst_para.height = d_canvas_h;
                 break;
             case 1:
-                ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                if (output_buffer_info->format == PIXEL_FORMAT_YV12)
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                else
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex->dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex->dst_para.width = d_canvas_w/2;
@@ -1453,7 +1584,10 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 }
                 break;
             case 2:
-                ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                if (output_buffer_info->format == PIXEL_FORMAT_YV12)
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                else
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex->dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex->dst_para.width = d_canvas_w/2;
@@ -1700,6 +1834,39 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
                     D_GE2D("yv12 src canvas_w not alligned\n ");
             }
+        } else if (input_buffer_info->format == PIXEL_FORMAT_YU12) {
+            if (input_buffer_info->plane_number == 1) {
+                ge2d_config_ex->src_planes[0].addr = input_buffer_info->offset[0];
+                ge2d_config_ex->src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
+                ge2d_config_ex->src_planes[0].w = s_canvas_w;
+                ge2d_config_ex->src_planes[0].h = s_canvas_h;
+                ge2d_config_ex->src_planes[1].addr = YV12_Y_ALIGNED(s_canvas_w) * s_canvas_h;
+                ge2d_config_ex->src_planes[1].shared_fd = 0;
+                ge2d_config_ex->src_planes[1].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex->src_planes[1].h = s_canvas_h/2;
+                ge2d_config_ex->src_planes[2].addr = YV12_Y_ALIGNED(s_canvas_w) *
+                    s_canvas_h + CANVAS_ALIGNED(s_canvas_w/2) * s_canvas_h/2;
+                ge2d_config_ex->src_planes[2].shared_fd = 0;
+                ge2d_config_ex->src_planes[2].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex->src_planes[2].h = s_canvas_h/2;
+                if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
+                    D_GE2D("yu12 src canvas_w not alligned\n ");
+            } else if (input_buffer_info->plane_number == 3) {
+                ge2d_config_ex->src_planes[0].addr = input_buffer_info->offset[0];
+                ge2d_config_ex->src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
+                ge2d_config_ex->src_planes[0].w = s_canvas_w;
+                ge2d_config_ex->src_planes[0].h = s_canvas_h;
+                ge2d_config_ex->src_planes[1].addr = input_buffer_info->offset[1];
+                ge2d_config_ex->src_planes[1].shared_fd = input_buffer_info->shared_fd[1];
+                ge2d_config_ex->src_planes[1].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex->src_planes[1].h = s_canvas_h/2;
+                ge2d_config_ex->src_planes[2].addr = input_buffer_info->offset[2];
+                ge2d_config_ex->src_planes[2].shared_fd = input_buffer_info->shared_fd[2];
+                ge2d_config_ex->src_planes[2].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex->src_planes[2].h = s_canvas_h/2;
+                if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
+                    D_GE2D("yu12 src canvas_w not alligned\n ");
+            }
         } else if (input_buffer_info->format == PIXEL_FORMAT_YCbCr_422_SP) {
             if (input_buffer_info->plane_number == 1) {
                 ge2d_config_ex->src_planes[0].addr = input_buffer_info->offset[0];
@@ -1747,6 +1914,7 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
             }
             break;
         case PIXEL_FORMAT_YV12:
+        case PIXEL_FORMAT_YU12:
             switch (pge2dinfo->dst_op_cnt) {
             case 0:
                 ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_Y | GE2D_LITTLE_ENDIAN;
@@ -1758,7 +1926,10 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex->dst_para.height = d_canvas_h;
                 break;
             case 1:
-                ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                if (output_buffer_info->format == PIXEL_FORMAT_YV12)
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                else
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex->dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex->dst_para.width = d_canvas_w/2;
@@ -1773,7 +1944,10 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 }
                 break;
             case 2:
-                ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                if (output_buffer_info->format == PIXEL_FORMAT_YV12)
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                else
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex->dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex->dst_para.width = d_canvas_w/2;
@@ -2165,6 +2339,39 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
                     D_GE2D("yv12 src canvas_w not alligned\n ");
             }
+        } else if (input_buffer_info->format == PIXEL_FORMAT_YU12) {
+            if (input_buffer_info->plane_number == 1) {
+                ge2d_config_ex->src_planes[0].addr = input_buffer_info->offset[0];
+                ge2d_config_ex->src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
+                ge2d_config_ex->src_planes[0].w = s_canvas_w;
+                ge2d_config_ex->src_planes[0].h = s_canvas_h;
+                ge2d_config_ex->src_planes[1].addr = YV12_Y_ALIGNED(s_canvas_w) * s_canvas_h;
+                ge2d_config_ex->src_planes[1].shared_fd = 0;
+                ge2d_config_ex->src_planes[1].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex->src_planes[1].h = s_canvas_h/2;
+                ge2d_config_ex->src_planes[2].addr = YV12_Y_ALIGNED(s_canvas_w) *
+                    s_canvas_h + CANVAS_ALIGNED(s_canvas_w/2 ) * s_canvas_h/2;
+                ge2d_config_ex->src_planes[2].shared_fd = 0;
+                ge2d_config_ex->src_planes[2].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex->src_planes[2].h = s_canvas_h/2;
+                if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
+                    D_GE2D("yu12 src canvas_w not alligned\n ");
+            } else if (input_buffer_info->plane_number == 3) {
+                ge2d_config_ex->src_planes[0].addr = input_buffer_info->offset[0];
+                ge2d_config_ex->src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
+                ge2d_config_ex->src_planes[0].w = s_canvas_w;
+                ge2d_config_ex->src_planes[0].h = s_canvas_h;
+                ge2d_config_ex->src_planes[1].addr = input_buffer_info->offset[1];
+                ge2d_config_ex->src_planes[1].shared_fd = input_buffer_info->shared_fd[1];
+                ge2d_config_ex->src_planes[1].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex->src_planes[1].h = s_canvas_h/2;
+                ge2d_config_ex->src_planes[2].addr = input_buffer_info->offset[2];
+                ge2d_config_ex->src_planes[2].shared_fd = input_buffer_info->shared_fd[2];
+                ge2d_config_ex->src_planes[2].w = CANVAS_ALIGNED(s_canvas_w/2);
+                ge2d_config_ex->src_planes[2].h = s_canvas_h/2;
+                if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
+                    D_GE2D("yu12 src canvas_w not alligned\n ");
+            }
         } else if (input_buffer_info->format == PIXEL_FORMAT_YCbCr_422_SP) {
             if (input_buffer_info->plane_number == 1) {
                 ge2d_config_ex->src_planes[0].addr = input_buffer_info->offset[0];
@@ -2259,6 +2466,39 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
                     D_GE2D("yv12 src2 canvas_w not alligned\n ");
              }
+        } else if (input2_buffer_info->format == PIXEL_FORMAT_YU12) {
+            if (input2_buffer_info->plane_number == 1) {
+                ge2d_config_ex->src2_planes[0].addr = input2_buffer_info->offset[0];
+                ge2d_config_ex->src2_planes[0].shared_fd = input2_buffer_info->shared_fd[0];
+                ge2d_config_ex->src2_planes[0].w = s2_canvas_w;
+                ge2d_config_ex->src2_planes[0].h = s2_canvas_h;
+                ge2d_config_ex->src2_planes[1].addr = YV12_Y_ALIGNED(s2_canvas_w) * s2_canvas_h;
+                ge2d_config_ex->src2_planes[1].shared_fd = 0;
+                ge2d_config_ex->src2_planes[1].w = CANVAS_ALIGNED(s2_canvas_w/2);
+                ge2d_config_ex->src2_planes[1].h = s2_canvas_h/2;
+                ge2d_config_ex->src2_planes[2].addr = YV12_Y_ALIGNED(s2_canvas_w) *
+                    s2_canvas_h + CANVAS_ALIGNED(s2_canvas_w/2)* s2_canvas_h/2;
+                ge2d_config_ex->src2_planes[2].shared_fd = 0;
+                ge2d_config_ex->src2_planes[2].w = CANVAS_ALIGNED(s2_canvas_w/2);
+                ge2d_config_ex->src2_planes[2].h = s2_canvas_h/2;
+                if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
+                    D_GE2D("yu12 src2 canvas_w not alligned\n ");
+             } else if (input2_buffer_info->plane_number == 3) {
+                ge2d_config_ex->src2_planes[0].addr = input2_buffer_info->offset[0];
+                ge2d_config_ex->src2_planes[0].shared_fd = input2_buffer_info->shared_fd[0];
+                ge2d_config_ex->src2_planes[0].w = s2_canvas_w;
+                ge2d_config_ex->src2_planes[0].h = s2_canvas_h;
+                ge2d_config_ex->src2_planes[1].addr = input2_buffer_info->offset[1];
+                ge2d_config_ex->src2_planes[1].shared_fd = input2_buffer_info->shared_fd[1];
+                ge2d_config_ex->src2_planes[1].w = CANVAS_ALIGNED(s2_canvas_w/2);
+                ge2d_config_ex->src2_planes[1].h = s2_canvas_h/2;
+                ge2d_config_ex->src2_planes[2].addr = input2_buffer_info->offset[2];
+                ge2d_config_ex->src2_planes[2].shared_fd = input2_buffer_info->shared_fd[2];
+                ge2d_config_ex->src2_planes[2].w = CANVAS_ALIGNED(s2_canvas_w/2);
+                ge2d_config_ex->src2_planes[2].h = s2_canvas_h/2;
+                if ( !(d_canvas_w % 64) || !(d_canvas_w % 32))
+                    D_GE2D("yu12 src2 canvas_w not alligned\n ");
+             }
         } else if (input2_buffer_info->format == PIXEL_FORMAT_YCbCr_422_SP) {
             if (input2_buffer_info->plane_number == 1) {
                 ge2d_config_ex->src2_planes[0].addr = input2_buffer_info->offset[0];
@@ -2319,7 +2559,8 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
             ge2d_config_ex->dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
             ge2d_config_ex->dst_planes[0].w = d_canvas_w;
             ge2d_config_ex->dst_planes[0].h = d_canvas_h;
-        } else if (output_buffer_info->format == PIXEL_FORMAT_YV12) {
+        } else if (output_buffer_info->format == PIXEL_FORMAT_YV12 ||
+                   output_buffer_info->format == PIXEL_FORMAT_YU12) {
             switch (pge2dinfo->dst_op_cnt) {
             case 0:
                 ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_Y | GE2D_LITTLE_ENDIAN;
@@ -2331,7 +2572,10 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex->dst_para.height = d_canvas_h;
                 break;
             case 1:
-                ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                if (output_buffer_info->format == PIXEL_FORMAT_YV12)
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                else
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex->dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex->dst_para.width = d_canvas_w/2;
@@ -2346,7 +2590,10 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 }
                 break;
             case 2:
-                ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                if (output_buffer_info->format == PIXEL_FORMAT_YV12)
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                else
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex->dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex->dst_para.width = d_canvas_w/2;
@@ -2480,6 +2727,7 @@ static int ge2d_blit(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *rect,unsigne
         }
         break;
     case PIXEL_FORMAT_YV12:
+    case PIXEL_FORMAT_YU12:
         switch (pge2dinfo->dst_op_cnt) {
         case 0:
             op_ge2d_info.dst_rect.x = dx;
@@ -2548,6 +2796,7 @@ static int ge2d_blit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *rect
         }
         break;
     case PIXEL_FORMAT_YV12:
+    case PIXEL_FORMAT_YU12:
         switch (pge2dinfo->dst_op_cnt) {
         case 0:
             op_ge2d_info.dst_rect.x = dx;
@@ -2614,6 +2863,7 @@ static int ge2d_strechblit(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *srect,
         }
         break;
     case PIXEL_FORMAT_YV12:
+    case PIXEL_FORMAT_YU12:
         switch (pge2dinfo->dst_op_cnt) {
         case 0:
             op_ge2d_info.dst_rect.x = drect->x;
@@ -2680,6 +2930,7 @@ static int ge2d_strechblit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t
         }
         break;
     case PIXEL_FORMAT_YV12:
+    case PIXEL_FORMAT_YU12:
         switch (pge2dinfo->dst_op_cnt) {
         case 0:
             op_ge2d_info.dst_rect.x = drect->x;
