@@ -452,6 +452,25 @@ int aml_ge2d_process_ion(aml_ge2d_info_t *pge2dinfo)
     return ret;
 }
 
+int  aml_ge2d_sync_cache(aml_ge2d_info_t *pge2dinfo, int src_id)
+{
+    int i, shared_fd = -1;
+
+    if (pge2dinfo) {
+        for (i = 0; i < pge2dinfo->src_info[src_id].plane_number; i++) {
+            shared_fd = pge2dinfo->src_info[src_id].shared_fd[i];
+            if (shared_fd != -1)
+                ion_mem_sync_cache(pge2dinfo->ion_fd, shared_fd);
+        }
+
+    } else {
+        E_GE2D("aml_ge2d_sync err!\n");
+        return -1;
+    }
+
+    return 0;
+}
+
 int  aml_ge2d_invalid_cache(aml_ge2d_info_t *pge2dinfo)
 {
     int i, shared_fd = -1;

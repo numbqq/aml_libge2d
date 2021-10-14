@@ -47,6 +47,7 @@ int aml_ge2d_execute(aml_ge2d_info_t *pge2dinfo);
 void aml_ge2d_detach_dma_fd(aml_ge2d_info_t *pge2dinfo,
 			    enum ge2d_data_type_e data_type);
 int aml_ge2d_process_ion(aml_ge2d_info_t *pge2dinfo);
+int  aml_ge2d_sync_cache(aml_ge2d_info_t *pge2dinfo, int src_id);
 int  aml_ge2d_invalid_cache(aml_ge2d_info_t *pge2dinfo);
 void aml_ge2d_sync_for_device(aml_ge2d_info_t *pge2dinfo, int src_id);
 void aml_ge2d_sync_for_cpu(aml_ge2d_info_t *pge2dinfo);

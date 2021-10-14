@@ -668,9 +668,20 @@ static int do_blend(aml_ge2d_t *amlge2d)
         ret = aml_read_file_src1(amlge2d, SRC1_FILE_NAME);
         if (ret < 0)
            return  ge2d_fail;
+        if (amlge2d->ge2dinfo.src_info[0].mem_alloc_type == AML_GE2D_MEM_ION) {
+            ret = aml_ge2d_sync_cache(pge2dinfo, 0);
+            if (ret < 0)
+                return ge2d_fail;
+        }
+
         ret = aml_read_file_src2(amlge2d, SRC2_FILE_NAME);
         if (ret < 0)
            return ge2d_fail;
+        if (amlge2d->ge2dinfo.src_info[1].mem_alloc_type == AML_GE2D_MEM_ION) {
+            ret = aml_ge2d_sync_cache(pge2dinfo, 1);
+            if (ret < 0)
+                return ge2d_fail;
+        }
 
         pge2dinfo->src_info[0].rect.x = src1_rect_x;
         pge2dinfo->src_info[0].rect.y = src1_rect_y;
@@ -1095,6 +1106,11 @@ static int do_strechblit(aml_ge2d_t *amlge2d)
     ret = aml_read_file_src1(amlge2d, SRC1_FILE_NAME);
     if (ret < 0)
        return ge2d_fail;
+    if (amlge2d->ge2dinfo.src_info[0].mem_alloc_type == AML_GE2D_MEM_ION) {
+       ret = aml_ge2d_sync_cache(pge2dinfo, 0);
+       if (ret < 0)
+           return ge2d_fail;
+    }
 
     pge2dinfo->src_info[0].rect.x = src1_rect_x;
     pge2dinfo->src_info[0].rect.y = src1_rect_y;
@@ -1146,6 +1162,11 @@ static int do_blit(aml_ge2d_t *amlge2d)
     ret = aml_read_file_src1(amlge2d, SRC1_FILE_NAME);
     if (ret < 0)
        return ge2d_fail;
+    if (amlge2d->ge2dinfo.src_info[0].mem_alloc_type == AML_GE2D_MEM_ION) {
+        ret = aml_ge2d_sync_cache(pge2dinfo, 0);
+        if (ret < 0)
+            return ge2d_fail;
+    }
 
     pge2dinfo->src_info[0].rect.x = src1_rect_x;
     pge2dinfo->src_info[0].rect.y = src1_rect_y;
