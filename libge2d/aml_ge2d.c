@@ -166,9 +166,10 @@ int aml_ge2d_init(aml_ge2d_t *pge2d)
     if (fd_ge2d < 0)
         return ge2d_fail;
     ion_fd = ion_mem_init();
-    if (ion_fd < 0)
+    if (ion_fd < 0) {
+        close(fd_ge2d);
         return ge2d_fail;
-
+    }
     pge2d->ge2dinfo.ge2d_fd = fd_ge2d;
     pge2d->ge2dinfo.ion_fd = ion_fd;
     pge2d->ge2dinfo.cap_attr = aml_ge2d_get_cap(fd_ge2d);
@@ -340,7 +341,7 @@ int aml_ge2d_mem_alloc(aml_ge2d_t *pge2d)
                     goto exit;
                 }
                 dma_fd = ((IONMEM_AllocParams*)pge2d->cmemParm_src2[i])->mImageFd;
-            } else if (pge2d->ge2dinfo.src_info[1].mem_alloc_type == AML_GE2D_MEM_DMABUF) {
+            } else if (pge2d->ge2dinfo.src_info[i].mem_alloc_type == AML_GE2D_MEM_DMABUF) {
                 dma_fd = dmabuf_alloc(pge2d->ge2dinfo.ge2d_fd, GE2D_BUF_INPUT2, pge2d->src2_size[i]);
                 if (dma_fd < 0) {
                     E_GE2D("%s,%d,Not enough memory\n",__func__, __LINE__);

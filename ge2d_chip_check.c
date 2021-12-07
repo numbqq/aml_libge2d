@@ -139,12 +139,14 @@ static int load_result_file(const char* url)
     amlge2d.src_data[0] = (char*)malloc(amlge2d.src_size[0]);
     if (!amlge2d.src_data[0]) {
         E_GE2D("malloc for src_data failed\n");
+        close(fd);
         return ge2d_fail;
     }
 
     read_num = read(fd,amlge2d.src_data[0],amlge2d.src_size[0]);
     if (read_num <= 0) {
         E_GE2D("read file read_num=%d error\n",read_num);
+        close(fd);
         return ge2d_fail;
     }
 
@@ -170,12 +172,14 @@ static int aml_read_file_src1(const char* url , aml_ge2d_info_t *pge2dinfo)
     amlge2d.src_data[0] = (char*)malloc(amlge2d.src_size[0]);
     if (!amlge2d.src_data[0]) {
         E_GE2D("malloc for src_data failed\n");
+        close(fd);
         return ge2d_fail;
     }
 
     read_num = read(fd,amlge2d.src_data[0],amlge2d.src_size[0]);
     if (read_num <= 0) {
         E_GE2D("read file read_num=%d error\n",read_num);
+        close(fd);
         return ge2d_fail;
     }
 
@@ -213,12 +217,14 @@ static int aml_read_file_src2(const char* url , aml_ge2d_info_t *pge2dinfo)
     amlge2d.src2_data[0] = (char*)malloc(amlge2d.src2_size[0]);
     if (!amlge2d.src2_data[0]) {
         E_GE2D("malloc for src_data failed\n");
+        close(fd);
         return ge2d_fail;
     }
 
     read_num = read(fd,amlge2d.src2_data[0],amlge2d.src2_size[0]);
     if (read_num <= 0) {
         E_GE2D("read file read_num=%d error\n",read_num);
+        close(fd);
         return ge2d_fail;
     }
 

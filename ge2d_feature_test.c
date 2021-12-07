@@ -527,6 +527,7 @@ static int aml_write_file(aml_ge2d_t *amlge2d, const char* url)
         if (write_num <= 0) {
             E_GE2D("write file write_num=%d error\n",write_num);
             close(fd);
+            return ge2d_fail;
         }
     }
     close(fd);
@@ -562,19 +563,19 @@ static int do_cmd(aml_ge2d_info_t *pge2dinfo)
             return ge2d_fail;
         }
 
-        if (attach_flag | ATTACH_SRC) {
+        if (attach_flag & ATTACH_SRC) {
             ret = aml_ge2d_attach_dma_fd(pge2dinfo, AML_GE2D_SRC);
             if (ret < 0)
                 return ret;
         }
 
-        if (attach_flag | ATTACH_SRC2) {
+        if (attach_flag & ATTACH_SRC2) {
             ret = aml_ge2d_attach_dma_fd(pge2dinfo, AML_GE2D_SRC2);
             if (ret < 0)
                 return ret;
         }
 
-        if (attach_flag | ATTACH_DST) {
+        if (attach_flag & ATTACH_DST) {
             ret = aml_ge2d_attach_dma_fd(pge2dinfo, AML_GE2D_DST);
             if (ret < 0)
                 return ret;
@@ -595,11 +596,11 @@ static int do_cmd(aml_ge2d_info_t *pge2dinfo)
             }
         }
         /* detach dma fd for src1/src2/dst */
-        if (attach_flag | ATTACH_SRC)
+        if (attach_flag & ATTACH_SRC)
             aml_ge2d_detach_dma_fd(pge2dinfo, AML_GE2D_SRC);
-        if (attach_flag | ATTACH_SRC2)
+        if (attach_flag & ATTACH_SRC2)
             aml_ge2d_detach_dma_fd(pge2dinfo, AML_GE2D_SRC2);
-        if (attach_flag | ATTACH_DST)
+        if (attach_flag & ATTACH_DST)
             aml_ge2d_detach_dma_fd(pge2dinfo, AML_GE2D_DST);
     } else {
         stime = myclock();
@@ -1297,7 +1298,7 @@ void *main_run(void *arg)
         sprintf(dst_file_name, "%s_thread%d_%d", DST_FILE_NAME, *(int *)arg, run_time);
         ret = aml_write_file(&amlge2d, dst_file_name);
         if (ret < 0)
-            goto exit;
+            E_GE2D("failed write file\n");
     exit:
         for (i = 0; i < amlge2d.ge2dinfo.src_info[0].plane_number; i++) {
             if (amlge2d.src_data[i]) {

@@ -27,7 +27,6 @@
 
 static int ge2d_alloc_dma_buffer(int ge2d_fd, unsigned int dir, unsigned int len)
 {
-    int ret = -1;
     struct ge2d_dmabuf_req_s buf_cfg;
 
     memset(&buf_cfg, 0, sizeof(buf_cfg));
@@ -35,10 +34,9 @@ static int ge2d_alloc_dma_buffer(int ge2d_fd, unsigned int dir, unsigned int len
     buf_cfg.dma_dir = dir;
     buf_cfg.len = len;
 
-    ret = ioctl(ge2d_fd, GE2D_REQUEST_BUFF, &buf_cfg);
-    if (ret < 0) {
-        E_GE2D("%s failed: %s\n", __func__, strerror(ret));
-        return ret;
+    if (ioctl(ge2d_fd, GE2D_REQUEST_BUFF, &buf_cfg)) {
+        E_GE2D("failed alloc dma buffer\n");
+        return -1;
     }
     E_GE2D("dma buffer alloc, index=%d\n", buf_cfg.index);
     return buf_cfg.index;

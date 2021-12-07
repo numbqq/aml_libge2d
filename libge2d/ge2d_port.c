@@ -3258,7 +3258,7 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
 
             ret = ge2d_fillrectangle_config_ex(fd,pge2dinfo);
             if (ret == ge2d_success)
-                ret = ge2d_fillrectangle(fd,&dst_rect,pge2dinfo->color);
+                ge2d_fillrectangle(fd,&dst_rect,pge2dinfo->color);
             break;
         case AML_GE2D_BLIT:
             if (!is_rect_valid(&pge2dinfo->src_info[0]))
@@ -3274,9 +3274,9 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
                 ret = ge2d_blit_config_ex(fd,pge2dinfo);
                 if (ret == ge2d_success) {
                     if (is_no_alpha(pge2dinfo->src_info[0].format))
-                        ret = ge2d_blit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy);
+                        ge2d_blit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy);
                     else
-                        ret = ge2d_blit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy);
+                        ge2d_blit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy);
                 }
             }
             break;
@@ -3295,9 +3295,9 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
                 if (ret == ge2d_success) {
 
                     if (is_no_alpha(pge2dinfo->src_info[0].format))
-                        ret = ge2d_strechblit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect);
+                        ge2d_strechblit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect);
                     else
-                        ret = ge2d_strechblit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect);
+                        ge2d_strechblit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect);
 
                 }
             }
@@ -3324,20 +3324,20 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
                     || (is_no_alpha(pge2dinfo->src_info[1].format))
                     || (pge2dinfo->src_info[0].layer_mode == LAYER_MODE_NON)) {
                     if (pge2dinfo->b_src_swap)
-                        ret = ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
+                        ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
                             &(pge2dinfo->src_info[0].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                     else
-                        ret = ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
+                        ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
                             &(pge2dinfo->src_info[1].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                 } else {
                     if (pge2dinfo->b_src_swap)
-                        ret = ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
+                        ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
                             &(pge2dinfo->src_info[0].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                     else
-                        ret = ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
+                        ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
                             &(pge2dinfo->src_info[1].rect),
                             &dst_rect,pge2dinfo->blend_mode);
                 }
@@ -3356,7 +3356,7 @@ int ge2d_attach_dma_fd(int fd, aml_ge2d_info_t *pge2dinfo,
 {
     struct ge2d_dmabuf_attach_s attach;
     int i, ret = -1;
-    int *shared_fd;
+    int *shared_fd = NULL;
 
     switch (data_type) {
     case AML_GE2D_SRC:
@@ -3368,7 +3368,8 @@ int ge2d_attach_dma_fd(int fd, aml_ge2d_info_t *pge2dinfo,
     case AML_GE2D_DST:
         shared_fd = pge2dinfo->dst_info.shared_fd;
         break;
-    default:
+    }
+    if (shared_fd == NULL) {
         E_GE2D("%s, data_type error\n", __func__);
         return ge2d_fail;
     }
@@ -3388,18 +3389,15 @@ int ge2d_attach_dma_fd(int fd, aml_ge2d_info_t *pge2dinfo,
     case AML_GE2D_SRC:
         for (i = 0; i < pge2dinfo->src_info[0].plane_number; i++)
             pge2dinfo->src_info[0].shared_fd[i] = DMA_FD_ATTACHED;
-            break;
-        case AML_GE2D_SRC2:
-            for (i = 0; i < pge2dinfo->src_info[1].plane_number; i++)
-                pge2dinfo->src_info[1].shared_fd[i] = DMA_FD_ATTACHED;
-            break;
-        case AML_GE2D_DST:
-            for (i = 0; i < pge2dinfo->dst_info.plane_number; i++)
-                pge2dinfo->dst_info.shared_fd[i] = DMA_FD_ATTACHED;
-                break;
-        default:
-            E_GE2D("%s, data_type error\n", __func__);
-            return ge2d_fail;
+        break;
+    case AML_GE2D_SRC2:
+        for (i = 0; i < pge2dinfo->src_info[1].plane_number; i++)
+            pge2dinfo->src_info[1].shared_fd[i] = DMA_FD_ATTACHED;
+        break;
+    case AML_GE2D_DST:
+        for (i = 0; i < pge2dinfo->dst_info.plane_number; i++)
+            pge2dinfo->dst_info.shared_fd[i] = DMA_FD_ATTACHED;
+        break;
     }
 
     return ge2d_success;
