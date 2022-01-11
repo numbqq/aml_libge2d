@@ -67,6 +67,21 @@ static int  pixel_to_ge2d_format(int *img_format, int *pge2d_format,int *p_bpp)
         *p_bpp = GE2D_BPP_16;
         is_one_plane = 1;
         break;
+        case PIXEL_FORMAT_ARGB_4444:
+        *pge2d_format = GE2D_FORMAT_S16_ARGB_4444;
+        *p_bpp = GE2D_BPP_16;
+        is_one_plane = 1;
+        break;
+        case PIXEL_FORMAT_RGBA_4444:
+        *pge2d_format = GE2D_FORMAT_S16_RGBA_4444;
+        *p_bpp = GE2D_BPP_16;
+        is_one_plane = 1;
+        break;
+        case PIXEL_FORMAT_ARGB_1555:
+        *pge2d_format = GE2D_FORMAT_S16_ARGB_1555;
+        *p_bpp = GE2D_BPP_16;
+        is_one_plane = 1;
+        break;
         case PIXEL_FORMAT_YCbCr_422_UYVY:
         *pge2d_format = GE2D_FORMAT_S16_YUV422;
         *p_bpp = GE2D_BPP_16;
@@ -102,6 +117,11 @@ static int  pixel_to_ge2d_format(int *img_format, int *pge2d_format,int *p_bpp)
         *pge2d_format = GE2D_FORMAT_M24_YUV422SP;
         *p_bpp = GE2D_BPP_8;
         is_one_plane = 0;
+        break;
+        case PIXEL_FORMAT_CLUT8:
+        *pge2d_format = GE2D_FORMAT_S8_LUT;
+        *p_bpp = GE2D_BPP_8;
+        is_one_plane = 1;
         break;
         default:
         E_GE2D("Image format %d not supported!", *img_format);
@@ -154,6 +174,9 @@ static int is_no_alpha(int format)
 {
     if ((format == PIXEL_FORMAT_RGBX_8888) ||
         (format == PIXEL_FORMAT_RGB_565) ||
+        (format == PIXEL_FORMAT_ARGB_4444) ||
+        (format == PIXEL_FORMAT_RGBA_4444) ||
+        (format == PIXEL_FORMAT_ARGB_1555) ||
         (format == PIXEL_FORMAT_RGB_888) ||
         (format == PIXEL_FORMAT_YCrCb_420_SP)||
         (format == PIXEL_FORMAT_YCbCr_420_SP_NV12) ||
@@ -226,8 +249,12 @@ static int get_dst_op_number(aml_ge2d_info_t *pge2dinfo)
     case PIXEL_FORMAT_ABGR_8888:
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_RGB_565:
+    case PIXEL_FORMAT_ARGB_4444:
+    case PIXEL_FORMAT_RGBA_4444:
+    case PIXEL_FORMAT_ARGB_1555:
     case PIXEL_FORMAT_BGRA_8888:
     case PIXEL_FORMAT_Y8:
+    case PIXEL_FORMAT_CLUT8:
     case PIXEL_FORMAT_YCrCb_420_SP:
     case PIXEL_FORMAT_YCbCr_422_SP:
     case PIXEL_FORMAT_YCbCr_420_SP_NV12:
@@ -258,6 +285,8 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
     int is_one_plane = -1;
     buffer_info_t* input_buffer_info = &(pge2dinfo->src_info[0]);
     buffer_info_t* output_buffer_info = &(pge2dinfo->dst_info);
+    unsigned int src_endian = input_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
+    unsigned int dst_endian = output_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
 
     if (output_buffer_info->plane_number < 1 ||
         output_buffer_info->plane_number > GE2D_MAX_PLANE)
@@ -266,7 +295,7 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
 
     if ((CANVAS_ALLOC == output_buffer_info->memtype)) {
         is_one_plane = pixel_to_ge2d_format(&output_buffer_info->format,&dst_format,&bpp);
-        dst_format |= GE2D_LITTLE_ENDIAN;
+        dst_format |= dst_endian;
         if ((int)0xffffffff == dst_format) {
             E_GE2D("can't get proper ge2d format\n" );
             return ge2d_fail;
@@ -274,15 +303,15 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
         ge2d_set_canvas(bpp,output_buffer_info->canvas_w,output_buffer_info->canvas_h,&d_canvas_w,&d_canvas_h);
 
         pixel_to_ge2d_format(&input_buffer_info->format,&src_format,&bpp);
-        src_format |= GE2D_LITTLE_ENDIAN;
+        src_format |= src_endian;
         ge2d_set_canvas(bpp,input_buffer_info->canvas_w,input_buffer_info->canvas_h,&s_canvas_w,&s_canvas_h);
     }else {
         is_one_plane = pixel_to_ge2d_format(&output_buffer_info->format,&dst_format,&bpp);
-        dst_format |= GE2D_LITTLE_ENDIAN;
+        dst_format |= dst_endian;
         ge2d_set_canvas(bpp,output_buffer_info->canvas_w,output_buffer_info->canvas_h,&d_canvas_w,&d_canvas_h);
 
         pixel_to_ge2d_format(&input_buffer_info->format,&src_format,&bpp);
-        src_format |= GE2D_LITTLE_ENDIAN;
+        src_format |= src_endian;
         ge2d_set_canvas(bpp,input_buffer_info->canvas_w,input_buffer_info->canvas_h,&s_canvas_w,&s_canvas_h);
     }
     D_GE2D("ge2d_fillrectangle_config_ex,memtype=%x,src_format=%x,s_canvas_w=%d,s_canvas_h=%d,rotation=%d\n",
@@ -353,7 +382,8 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex.dst_planes[1].w = d_canvas_w;
                 ge2d_config_ex.dst_planes[1].h = d_canvas_h/2;
             }
-        }  else if (output_buffer_info->format == PIXEL_FORMAT_Y8) {
+        }  else if (output_buffer_info->format == PIXEL_FORMAT_Y8 ||
+                    output_buffer_info->format == PIXEL_FORMAT_CLUT8) {
             ge2d_config_ex.dst_planes[0].addr = output_buffer_info->offset[0];
             ge2d_config_ex.dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
             ge2d_config_ex.dst_planes[0].w = d_canvas_w;
@@ -362,7 +392,7 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                    output_buffer_info->format == PIXEL_FORMAT_YU12) {
             switch (pge2dinfo->dst_op_cnt) {
             case 0:
-                ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_Y | GE2D_LITTLE_ENDIAN;
+                ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_Y | dst_endian;
                 ge2d_config_ex.dst_planes[0].addr = output_buffer_info->offset[0];
                 ge2d_config_ex.dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w;
@@ -372,9 +402,9 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 break;
             case 1:
                 if (output_buffer_info->format == PIXEL_FORMAT_YV12)
-                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | dst_endian;
                 else
-                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | dst_endian;
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex.dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex.dst_para.width = d_canvas_w/2;
@@ -390,9 +420,9 @@ static int ge2d_fillrectangle_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 break;
             case 2:
                 if (output_buffer_info->format == PIXEL_FORMAT_YV12)
-                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | dst_endian;
                 else
-                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | dst_endian;
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex.dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex.dst_para.width = d_canvas_w/2;
@@ -463,6 +493,8 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
     int is_one_plane_output = -1;
     buffer_info_t* input_buffer_info = &(pge2dinfo->src_info[0]);
     buffer_info_t* output_buffer_info = &(pge2dinfo->dst_info);
+    unsigned int src_endian = input_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
+    unsigned int dst_endian = output_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
 
     if (input_buffer_info->plane_number < 1 ||
         input_buffer_info->plane_number > GE2D_MAX_PLANE)
@@ -474,7 +506,7 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
 
     if ((CANVAS_ALLOC == input_buffer_info->memtype)) {
         is_one_plane_input = pixel_to_ge2d_format(&input_buffer_info->format,&src_format,&bpp);
-        src_format |= GE2D_LITTLE_ENDIAN;
+        src_format |= src_endian;
         if ((int)0xffffffff == src_format) {
             E_GE2D("can't get proper ge2d format\n" );
             return ge2d_fail;
@@ -484,7 +516,7 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
 
     if ((CANVAS_ALLOC == output_buffer_info->memtype)) {
         is_one_plane_output = pixel_to_ge2d_format(&output_buffer_info->format,&dst_format,&bpp);
-        dst_format |= GE2D_LITTLE_ENDIAN;
+        dst_format |= dst_endian;
         if ((int)0xffffffff == dst_format) {
             E_GE2D("can't get proper ge2d format\n" );
             return ge2d_fail;
@@ -584,7 +616,8 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex.src_planes[1].w = s_canvas_w;
                 ge2d_config_ex.src_planes[1].h = s_canvas_h/2;
             }
-        } else if (input_buffer_info->format == PIXEL_FORMAT_Y8) {
+        } else if (input_buffer_info->format == PIXEL_FORMAT_Y8 ||
+                   input_buffer_info->format == PIXEL_FORMAT_CLUT8) {
             ge2d_config_ex.src_planes[0].addr = input_buffer_info->offset[0];
             ge2d_config_ex.src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
             ge2d_config_ex.src_planes[0].w = s_canvas_w;
@@ -694,9 +727,13 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
         case PIXEL_FORMAT_RGB_888:
         case PIXEL_FORMAT_BGR_888:
         case PIXEL_FORMAT_RGB_565:
+        case PIXEL_FORMAT_ARGB_4444:
+        case PIXEL_FORMAT_RGBA_4444:
+        case PIXEL_FORMAT_ARGB_1555:
         case PIXEL_FORMAT_YCbCr_422_UYVY:
         case PIXEL_FORMAT_BGRA_8888:
         case PIXEL_FORMAT_Y8:
+        case PIXEL_FORMAT_CLUT8:
             if (pge2dinfo->dst_op_cnt == 0) {
                 ge2d_config_ex.dst_planes[0].addr = output_buffer_info->offset[0];
                 ge2d_config_ex.dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
@@ -708,7 +745,7 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
         case PIXEL_FORMAT_YU12:
             switch (pge2dinfo->dst_op_cnt) {
             case 0:
-                ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_Y | GE2D_LITTLE_ENDIAN;
+                ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_Y | dst_endian;
                 ge2d_config_ex.dst_planes[0].addr = output_buffer_info->offset[0];
                 ge2d_config_ex.dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w;
@@ -718,9 +755,9 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 break;
             case 1:
                 if (output_buffer_info->format == PIXEL_FORMAT_YV12)
-                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | dst_endian;
                 else {
-                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | dst_endian;
                 }
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex.dst_planes[0].h = d_canvas_h/2;
@@ -737,9 +774,9 @@ static int ge2d_blit_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 break;
             case 2:
                 if (output_buffer_info->format == PIXEL_FORMAT_YV12)
-                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | dst_endian;
                 else {
-                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | dst_endian;
                 }
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex.dst_planes[0].h = d_canvas_h/2;
@@ -843,6 +880,10 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
     buffer_info_t* input_buffer_info = &pge2dinfo->src_info[0];
     buffer_info_t* input2_buffer_info = &pge2dinfo->src_info[1];
     buffer_info_t* output_buffer_info = &pge2dinfo->dst_info;
+    unsigned int src1_endian = input_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
+    unsigned int src2_endian = input2_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
+    unsigned int dst_endian = output_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
+
     /* src2 not support nv21/nv12/yv12, swap src1 and src2 */
     if (is_need_swap_src2(input2_buffer_info->format, input2_buffer_info,
                           output_buffer_info, pge2dinfo->cap_attr)) {
@@ -880,7 +921,7 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
 
     if (CANVAS_ALLOC == input_buffer_info->memtype) {
         is_one_plane_input = pixel_to_ge2d_format(&input_buffer_info->format,&src_format,&bpp);
-        src_format |= GE2D_LITTLE_ENDIAN;
+        src_format |= src1_endian;
         if ((int)0xffffffff == src_format) {
             E_GE2D("can't get proper ge2d format\n" );
             return ge2d_fail;
@@ -889,7 +930,7 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
     }
     if ((CANVAS_ALLOC == input2_buffer_info->memtype)) {
         is_one_plane_input2 = pixel_to_ge2d_format(&input2_buffer_info->format,&src2_format,&bpp);
-        src2_format |= GE2D_LITTLE_ENDIAN;
+        src2_format |= src2_endian;
         if ((int)0xffffffff == src2_format) {
             E_GE2D("can't get proper ge2d format\n" );
             return ge2d_fail;
@@ -899,7 +940,7 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
 
     if ((CANVAS_ALLOC == output_buffer_info->memtype)) {
         is_one_plane_output = pixel_to_ge2d_format(&output_buffer_info->format,&dst_format,&bpp);
-        dst_format |= GE2D_LITTLE_ENDIAN;
+        dst_format |= dst_endian;
         if ((int)0xffffffff == dst_format) {
             E_GE2D("can't get proper ge2d format\n" );
             return ge2d_fail;
@@ -1061,7 +1102,8 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex.src_planes[1].w = s_canvas_w;
                 ge2d_config_ex.src_planes[1].h = s_canvas_h/2;
             }
-        } else if (input_buffer_info->format == PIXEL_FORMAT_Y8) {
+        } else if (input_buffer_info->format == PIXEL_FORMAT_Y8 ||
+                   input_buffer_info->format == PIXEL_FORMAT_CLUT8) {
             ge2d_config_ex.src_planes[0].addr = input_buffer_info->offset[0];
             ge2d_config_ex.src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
             ge2d_config_ex.src_planes[0].w = s_canvas_w;
@@ -1188,7 +1230,8 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex.src2_planes[1].w = s2_canvas_w;
                 ge2d_config_ex.src2_planes[1].h = s2_canvas_h/2;
             }
-        } else if (input2_buffer_info->format == PIXEL_FORMAT_Y8) {
+        } else if (input2_buffer_info->format == PIXEL_FORMAT_Y8 ||
+                   input2_buffer_info->format == PIXEL_FORMAT_CLUT8) {
             ge2d_config_ex.src2_planes[0].addr = input2_buffer_info->offset[0];
             ge2d_config_ex.src2_planes[0].shared_fd = input2_buffer_info->shared_fd[0];
             ge2d_config_ex.src2_planes[0].w = s2_canvas_w;
@@ -1314,7 +1357,8 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex.dst_planes[1].w = d_canvas_w;
                 ge2d_config_ex.dst_planes[1].h = d_canvas_h/2;
             }
-        }  else if (output_buffer_info->format == PIXEL_FORMAT_Y8) {
+        }  else if (output_buffer_info->format == PIXEL_FORMAT_Y8 ||
+                    output_buffer_info->format == PIXEL_FORMAT_CLUT8) {
             ge2d_config_ex.dst_planes[0].addr = output_buffer_info->offset[0];
             ge2d_config_ex.dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
             ge2d_config_ex.dst_planes[0].w = d_canvas_w;
@@ -1323,7 +1367,7 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                    output_buffer_info->format == PIXEL_FORMAT_YU12) {
             switch (pge2dinfo->dst_op_cnt) {
             case 0:
-                ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_Y | GE2D_LITTLE_ENDIAN;
+                ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_Y | dst_endian;
                 ge2d_config_ex.dst_planes[0].addr = output_buffer_info->offset[0];
                 ge2d_config_ex.dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w;
@@ -1333,9 +1377,9 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 break;
             case 1:
                 if (output_buffer_info->format == PIXEL_FORMAT_YV12)
-                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | dst_endian;
                 else
-                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | dst_endian;
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex.dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex.dst_para.width = d_canvas_w/2;
@@ -1351,9 +1395,9 @@ static int ge2d_blend_config_ex_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 break;
             case 2:
                 if (output_buffer_info->format == PIXEL_FORMAT_YV12)
-                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CB | dst_endian;
                 else
-                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex.dst_para.format = GE2D_FORMAT_S8_CR | dst_endian;
                 ge2d_config_ex.dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex.dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex.dst_para.width = d_canvas_w/2;
@@ -1436,6 +1480,8 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     int is_one_plane = -1;
     buffer_info_t* input_buffer_info = &(pge2dinfo->src_info[0]);
     buffer_info_t* output_buffer_info = &(pge2dinfo->dst_info);
+    unsigned int src_endian = input_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
+    unsigned int dst_endian = output_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
 
     if (output_buffer_info->plane_number < 1 ||
         output_buffer_info->plane_number > GE2D_MAX_PLANE)
@@ -1455,7 +1501,7 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
 
     if ((CANVAS_ALLOC == output_buffer_info->memtype)) {
         is_one_plane = pixel_to_ge2d_format(&output_buffer_info->format,&dst_format,&bpp);
-        dst_format |= GE2D_LITTLE_ENDIAN;
+        dst_format |= dst_endian;
         if ((int)0xffffffff == dst_format) {
             E_GE2D("can't get proper ge2d format\n" );
             return ge2d_fail;
@@ -1463,15 +1509,15 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
         ge2d_set_canvas(bpp,output_buffer_info->canvas_w,output_buffer_info->canvas_h,&d_canvas_w,&d_canvas_h);
 
         pixel_to_ge2d_format(&input_buffer_info->format,&src_format,&bpp);
-        src_format |= GE2D_LITTLE_ENDIAN;
+        src_format |= src_endian;
         ge2d_set_canvas(bpp,input_buffer_info->canvas_w,input_buffer_info->canvas_h,&s_canvas_w,&s_canvas_h);
     }else {
         is_one_plane = pixel_to_ge2d_format(&output_buffer_info->format,&dst_format,&bpp);
-        dst_format |= GE2D_LITTLE_ENDIAN;
+        dst_format |= dst_endian;
         ge2d_set_canvas(bpp,output_buffer_info->canvas_w,output_buffer_info->canvas_h,&d_canvas_w,&d_canvas_h);
 
         pixel_to_ge2d_format(&input_buffer_info->format,&src_format,&bpp);
-        src_format |= GE2D_LITTLE_ENDIAN;
+        src_format |= src_endian;
         ge2d_set_canvas(bpp,input_buffer_info->canvas_w,input_buffer_info->canvas_h,&s_canvas_w,&s_canvas_h);
     }
     D_GE2D("ge2d_fillrectangle_config_ex,memtype=%x,src_format=%x,s_canvas_w=%d,s_canvas_h=%d,rotation=%d\n",
@@ -1548,7 +1594,8 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex->dst_planes[1].w = d_canvas_w;
                 ge2d_config_ex->dst_planes[1].h = d_canvas_h/2;
             }
-        }  else if (output_buffer_info->format == PIXEL_FORMAT_Y8) {
+        }  else if (output_buffer_info->format == PIXEL_FORMAT_Y8 ||
+                    output_buffer_info->format == PIXEL_FORMAT_CLUT8) {
             ge2d_config_ex->dst_planes[0].addr = output_buffer_info->offset[0];
             ge2d_config_ex->dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
             ge2d_config_ex->dst_planes[0].w = d_canvas_w;
@@ -1557,7 +1604,7 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                    output_buffer_info->format == PIXEL_FORMAT_YU12) {
             switch (pge2dinfo->dst_op_cnt) {
             case 0:
-                ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_Y | GE2D_LITTLE_ENDIAN;
+                ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_Y | dst_endian;
                 ge2d_config_ex->dst_planes[0].addr = output_buffer_info->offset[0];
                 ge2d_config_ex->dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w;
@@ -1567,9 +1614,9 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 break;
             case 1:
                 if (output_buffer_info->format == PIXEL_FORMAT_YV12)
-                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | dst_endian;
                 else
-                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | dst_endian;
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex->dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex->dst_para.width = d_canvas_w/2;
@@ -1585,9 +1632,9 @@ static int ge2d_fillrectangle_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 break;
             case 2:
                 if (output_buffer_info->format == PIXEL_FORMAT_YV12)
-                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | dst_endian;
                 else
-                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | dst_endian;
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex->dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex->dst_para.width = d_canvas_w/2;
@@ -1656,6 +1703,8 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     int is_one_plane_output = -1;
     buffer_info_t* input_buffer_info = &(pge2dinfo->src_info[0]);
     buffer_info_t* output_buffer_info = &(pge2dinfo->dst_info);
+    unsigned int src_endian = input_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
+    unsigned int dst_endian = output_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
 
     if (input_buffer_info->plane_number < 1 ||
         input_buffer_info->plane_number > GE2D_MAX_PLANE)
@@ -1678,7 +1727,7 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
 
     if ((CANVAS_ALLOC == input_buffer_info->memtype)) {
         is_one_plane_input = pixel_to_ge2d_format(&input_buffer_info->format,&src_format,&bpp);
-        src_format |= GE2D_LITTLE_ENDIAN;
+        src_format |= src_endian;
         if ((int)0xffffffff == src_format) {
             E_GE2D("can't get proper ge2d format\n" );
             return ge2d_fail;
@@ -1688,7 +1737,7 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
 
     if ((CANVAS_ALLOC == output_buffer_info->memtype)) {
         is_one_plane_output = pixel_to_ge2d_format(&output_buffer_info->format,&dst_format,&bpp);
-        dst_format |= GE2D_LITTLE_ENDIAN;
+        dst_format |= dst_endian;
         if ((int)0xffffffff == dst_format) {
             E_GE2D("can't get proper ge2d format\n" );
             return ge2d_fail;
@@ -1794,7 +1843,8 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex->src_planes[1].w = s_canvas_w;
                 ge2d_config_ex->src_planes[1].h = s_canvas_h/2;
             }
-        } else if (input_buffer_info->format == PIXEL_FORMAT_Y8) {
+        } else if (input_buffer_info->format == PIXEL_FORMAT_Y8 ||
+                   input_buffer_info->format == PIXEL_FORMAT_CLUT8) {
             ge2d_config_ex->src_planes[0].addr = input_buffer_info->offset[0];
             ge2d_config_ex->src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
             ge2d_config_ex->src_planes[0].w = s_canvas_w;
@@ -1903,9 +1953,13 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
         case PIXEL_FORMAT_RGB_888:
         case PIXEL_FORMAT_BGR_888:
         case PIXEL_FORMAT_RGB_565:
+        case PIXEL_FORMAT_ARGB_4444:
+        case PIXEL_FORMAT_RGBA_4444:
+        case PIXEL_FORMAT_ARGB_1555:
         case PIXEL_FORMAT_YCbCr_422_UYVY:
         case PIXEL_FORMAT_BGRA_8888:
         case PIXEL_FORMAT_Y8:
+        case PIXEL_FORMAT_CLUT8:
             if (pge2dinfo->dst_op_cnt == 0) {
                 ge2d_config_ex->dst_planes[0].addr = output_buffer_info->offset[0];
                 ge2d_config_ex->dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
@@ -1917,7 +1971,7 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
         case PIXEL_FORMAT_YU12:
             switch (pge2dinfo->dst_op_cnt) {
             case 0:
-                ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_Y | GE2D_LITTLE_ENDIAN;
+                ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_Y | dst_endian;
                 ge2d_config_ex->dst_planes[0].addr = output_buffer_info->offset[0];
                 ge2d_config_ex->dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w;
@@ -1927,9 +1981,9 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 break;
             case 1:
                 if (output_buffer_info->format == PIXEL_FORMAT_YV12)
-                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | dst_endian;
                 else
-                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | dst_endian;
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex->dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex->dst_para.width = d_canvas_w/2;
@@ -1945,9 +1999,9 @@ static int ge2d_blit_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 break;
             case 2:
                 if (output_buffer_info->format == PIXEL_FORMAT_YV12)
-                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | dst_endian;
                 else
-                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | dst_endian;
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex->dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex->dst_para.width = d_canvas_w/2;
@@ -2044,10 +2098,13 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     int is_one_plane_input2 = -1;
     int is_one_plane_output = -1;
     int bpp = 0;
-
     buffer_info_t* input_buffer_info = &pge2dinfo->src_info[0];
     buffer_info_t* input2_buffer_info = &pge2dinfo->src_info[1];
     buffer_info_t* output_buffer_info = &pge2dinfo->dst_info;
+    unsigned int src1_endian = input_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
+    unsigned int src2_endian = input2_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
+    unsigned int dst_endian = output_buffer_info->endain ? GE2D_BIG_ENDIAN : GE2D_LITTLE_ENDIAN;
+
     /* src2 not support nv21/nv12/yv12, swap src1 and src2 */
     if (is_need_swap_src2(input2_buffer_info->format, input2_buffer_info,
                           output_buffer_info, pge2dinfo->cap_attr)) {
@@ -2110,7 +2167,7 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
 
     if (CANVAS_ALLOC == input_buffer_info->memtype) {
         is_one_plane_input = pixel_to_ge2d_format(&input_buffer_info->format,&src_format,&bpp);
-        src_format |= GE2D_LITTLE_ENDIAN;
+        src_format |= src1_endian;
         if ((int)0xffffffff == src_format) {
             E_GE2D("can't get proper ge2d format\n" );
             return ge2d_fail;
@@ -2119,7 +2176,7 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     }
     if ((CANVAS_ALLOC == input2_buffer_info->memtype)) {
         is_one_plane_input2 = pixel_to_ge2d_format(&input2_buffer_info->format,&src2_format,&bpp);
-        src2_format |= GE2D_LITTLE_ENDIAN;
+        src2_format |= src2_endian;
         if ((int)0xffffffff == src2_format) {
             E_GE2D("can't get proper ge2d format\n" );
             return ge2d_fail;
@@ -2129,7 +2186,7 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
 
     if ((CANVAS_ALLOC == output_buffer_info->memtype)) {
         is_one_plane_output = pixel_to_ge2d_format(&output_buffer_info->format,&dst_format,&bpp);
-        dst_format |= GE2D_LITTLE_ENDIAN;
+        dst_format |= dst_endian;
         if ((int)0xffffffff == dst_format) {
             E_GE2D("can't get proper ge2d format\n" );
             return ge2d_fail;
@@ -2299,7 +2356,8 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex->src_planes[1].w = s_canvas_w;
                 ge2d_config_ex->src_planes[1].h = s_canvas_h/2;
             }
-        } else if (input_buffer_info->format == PIXEL_FORMAT_Y8) {
+        } else if (input_buffer_info->format == PIXEL_FORMAT_Y8 ||
+                   input_buffer_info->format == PIXEL_FORMAT_CLUT8) {
             ge2d_config_ex->src_planes[0].addr = input_buffer_info->offset[0];
             ge2d_config_ex->src_planes[0].shared_fd = input_buffer_info->shared_fd[0];
             ge2d_config_ex->src_planes[0].w = s_canvas_w;
@@ -2426,7 +2484,8 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex->src2_planes[1].w = s2_canvas_w;
                 ge2d_config_ex->src2_planes[1].h = s2_canvas_h/2;
             }
-        } else if (input2_buffer_info->format == PIXEL_FORMAT_Y8) {
+        } else if (input2_buffer_info->format == PIXEL_FORMAT_Y8 ||
+                   input2_buffer_info->format == PIXEL_FORMAT_CLUT8) {
             ge2d_config_ex->src2_planes[0].addr = input2_buffer_info->offset[0];
             ge2d_config_ex->src2_planes[0].shared_fd = input2_buffer_info->shared_fd[0];
             ge2d_config_ex->src2_planes[0].w = s2_canvas_w;
@@ -2554,7 +2613,8 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 ge2d_config_ex->dst_planes[1].h = d_canvas_h/2;
 
             }
-        }  else if (output_buffer_info->format == PIXEL_FORMAT_Y8) {
+        }  else if (output_buffer_info->format == PIXEL_FORMAT_Y8 ||
+                    output_buffer_info->format == PIXEL_FORMAT_CLUT8) {
             ge2d_config_ex->dst_planes[0].addr = output_buffer_info->offset[0];
             ge2d_config_ex->dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
             ge2d_config_ex->dst_planes[0].w = d_canvas_w;
@@ -2563,7 +2623,7 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                    output_buffer_info->format == PIXEL_FORMAT_YU12) {
             switch (pge2dinfo->dst_op_cnt) {
             case 0:
-                ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_Y | GE2D_LITTLE_ENDIAN;
+                ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_Y | dst_endian;
                 ge2d_config_ex->dst_planes[0].addr = output_buffer_info->offset[0];
                 ge2d_config_ex->dst_planes[0].shared_fd = output_buffer_info->shared_fd[0];
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w;
@@ -2573,9 +2633,9 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 break;
             case 1:
                 if (output_buffer_info->format == PIXEL_FORMAT_YV12)
-                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | dst_endian;
                 else
-                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | dst_endian;
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex->dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex->dst_para.width = d_canvas_w/2;
@@ -2591,9 +2651,9 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
                 break;
             case 2:
                 if (output_buffer_info->format == PIXEL_FORMAT_YV12)
-                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CB | dst_endian;
                 else
-                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | GE2D_LITTLE_ENDIAN;
+                    ge2d_config_ex->dst_para.format = GE2D_FORMAT_S8_CR | dst_endian;
                 ge2d_config_ex->dst_planes[0].w = d_canvas_w/2;
                 ge2d_config_ex->dst_planes[0].h = d_canvas_h/2;
                 ge2d_config_ex->dst_para.width = d_canvas_w/2;
@@ -2713,8 +2773,12 @@ static int ge2d_blit(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *rect,unsigne
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888:
     case PIXEL_FORMAT_RGB_565:
+    case PIXEL_FORMAT_ARGB_4444:
+    case PIXEL_FORMAT_RGBA_4444:
+    case PIXEL_FORMAT_ARGB_1555:
     case PIXEL_FORMAT_BGRA_8888:
     case PIXEL_FORMAT_Y8:
+    case PIXEL_FORMAT_CLUT8:
     case PIXEL_FORMAT_YCrCb_420_SP:
     case PIXEL_FORMAT_YCbCr_422_SP:
     case PIXEL_FORMAT_YCbCr_420_SP_NV12:
@@ -2782,8 +2846,12 @@ static int ge2d_blit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *rect
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888:
     case PIXEL_FORMAT_RGB_565:
+    case PIXEL_FORMAT_ARGB_4444:
+    case PIXEL_FORMAT_RGBA_4444:
+    case PIXEL_FORMAT_ARGB_1555:
     case PIXEL_FORMAT_BGRA_8888:
     case PIXEL_FORMAT_Y8:
+    case PIXEL_FORMAT_CLUT8:
     case PIXEL_FORMAT_YCrCb_420_SP:
     case PIXEL_FORMAT_YCbCr_422_SP:
     case PIXEL_FORMAT_YCbCr_420_SP_NV12:
@@ -2849,8 +2917,12 @@ static int ge2d_strechblit(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *srect,
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888:
     case PIXEL_FORMAT_RGB_565:
+    case PIXEL_FORMAT_ARGB_4444:
+    case PIXEL_FORMAT_RGBA_4444:
+    case PIXEL_FORMAT_ARGB_1555:
     case PIXEL_FORMAT_BGRA_8888:
     case PIXEL_FORMAT_Y8:
+    case PIXEL_FORMAT_CLUT8:
     case PIXEL_FORMAT_YCbCr_422_SP:
     case PIXEL_FORMAT_YCrCb_420_SP:
     case PIXEL_FORMAT_YCbCr_420_SP_NV12:
@@ -2916,8 +2988,12 @@ static int ge2d_strechblit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888:
     case PIXEL_FORMAT_RGB_565:
+    case PIXEL_FORMAT_ARGB_4444:
+    case PIXEL_FORMAT_RGBA_4444:
+    case PIXEL_FORMAT_ARGB_1555:
     case PIXEL_FORMAT_BGRA_8888:
     case PIXEL_FORMAT_Y8:
+    case PIXEL_FORMAT_CLUT8:
     case PIXEL_FORMAT_YCbCr_422_SP:
     case PIXEL_FORMAT_YCrCb_420_SP:
     case PIXEL_FORMAT_YCbCr_420_SP_NV12:
@@ -3188,6 +3264,18 @@ int ge2d_get_cap(int fd)
     cap_attr = cap_mask;
     return cap_attr;
 }
+
+int ge2d_set_clut8_table(int fd, struct ge2d_clut8_t *clut8_table)
+{
+    int ret;
+    ret = ioctl(fd, GE2D_SET_CLUT, clut8_table);
+    if (ret < 0) {
+        E_GE2D("ge2d set clut table fail\n");
+        return ge2d_fail;
+    }
+    return ge2d_success;
+}
+
 
 int ge2d_open(void)
 {

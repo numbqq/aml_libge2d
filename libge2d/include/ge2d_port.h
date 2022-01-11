@@ -90,8 +90,15 @@ typedef enum  {
     PIXEL_FORMAT_YCbCr_420_SP_NV12,                // NV12 YCbCr YYYY.....UV....
     PIXEL_FORMAT_ARGB_8888,
     PIXEL_FORMAT_ABGR_8888,
-    PIXEL_FORMAT_YU12                              // YCbCr 4:2:0 Planar  YYYY......  U......V......
+    PIXEL_FORMAT_YU12,                             // YCbCr 4:2:0 Planar  YYYY......  U......V......
+    PIXEL_FORMAT_ARGB_1555,
+    PIXEL_FORMAT_ARGB_4444,
+    PIXEL_FORMAT_RGBA_4444,
+    PIXEL_FORMAT_CLUT8
 } pixel_format_t;
+
+#define PIXEL_FORMAT_LITTLE_ENDIAN 0
+#define PIXEL_FORMAT_BIG_ENDIAN    1
 
 /* if customized matrix is used, set this flag in format */
 #define MATRIX_CUSTOM               (0x80000000)
@@ -161,6 +168,7 @@ typedef struct buffer_info {
     unsigned char fill_color_en;
     unsigned int  def_color;
     int plane_number;
+    unsigned char endain;
 } buffer_info_t;
 
 struct ge2d_matrix_s {
@@ -187,6 +195,11 @@ struct ge2d_stride_s {
 	unsigned int src1_stride[GE2D_MAX_PLANE];
 	unsigned int src2_stride[GE2D_MAX_PLANE];
 	unsigned int dst_stride[GE2D_MAX_PLANE];
+};
+
+struct ge2d_clut8_t {
+    unsigned int data[256];
+    unsigned int count;
 };
 
 typedef struct aml_ge2d_info {
@@ -223,6 +236,7 @@ void sync_dst_dmabuf_to_cpu(aml_ge2d_info_t *pge2dinfo);
 /* for src0 or src1, use src_id to config */
 void sync_src_dmabuf_to_device(aml_ge2d_info_t *pge2dinfo, int src_id);
 int ge2d_process_ion(int fd,aml_ge2d_info_t *pge2dinfo);
+int ge2d_set_clut8_table(int fd, struct ge2d_clut8_t *clut8_table);
 
 #if defined (__cplusplus)
 }
