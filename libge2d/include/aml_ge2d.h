@@ -40,10 +40,14 @@ void aml_ge2d_mem_free_ion(aml_ge2d_t *pge2d);
 int aml_ge2d_mem_alloc(aml_ge2d_t *pge2d);
 void aml_ge2d_mem_free(aml_ge2d_t *pge2d);
 int aml_ge2d_process(aml_ge2d_info_t *pge2dinfo);
+int aml_ge2d_process_enqueue(aml_ge2d_info_t *pge2dinfo);
+int aml_ge2d_post_queue(aml_ge2d_info_t *pge2dinfo);
+
 int aml_ge2d_attach_dma_fd(aml_ge2d_info_t *pge2dinfo,
 			   enum ge2d_data_type_e data_type);
 int aml_ge2d_config(aml_ge2d_info_t *pge2dinfo);
 int aml_ge2d_execute(aml_ge2d_info_t *pge2dinfo);
+int aml_ge2d_execute_enqueue(aml_ge2d_info_t *pge2dinfo);
 void aml_ge2d_detach_dma_fd(aml_ge2d_info_t *pge2dinfo,
 			    enum ge2d_data_type_e data_type);
 int aml_ge2d_process_ion(aml_ge2d_info_t *pge2dinfo);

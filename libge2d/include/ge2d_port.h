@@ -225,11 +225,12 @@ typedef struct aml_ge2d_info {
 int ge2d_open(void);
 int ge2d_close(int fd);
 int ge2d_get_cap(int fd);
-int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo);
+int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo, int enqueue);
+int ge2d_post_queue(int fd);
 int ge2d_attach_dma_fd(int fd, aml_ge2d_info_t *pge2dinfo,
 		       enum ge2d_data_type_e data_type);
 int ge2d_config(int fd,aml_ge2d_info_t *pge2dinfo);
-int ge2d_execute(int fd,aml_ge2d_info_t *pge2dinfo);
+int ge2d_execute(int fd,aml_ge2d_info_t *pge2dinfo, int enqueue);
 void ge2d_detach_dma_fd(int fd, enum ge2d_data_type_e data_type);
 /* for dst buffer */
 void sync_dst_dmabuf_to_cpu(aml_ge2d_info_t *pge2dinfo);

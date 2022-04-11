@@ -408,7 +408,27 @@ int aml_ge2d_process(aml_ge2d_info_t *pge2dinfo)
     int ret = -1;
 
     if (pge2dinfo->ge2d_fd >= 0)
-        ret = ge2d_process(pge2dinfo->ge2d_fd, pge2dinfo);
+        ret = ge2d_process(pge2dinfo->ge2d_fd, pge2dinfo, 0);
+
+    return ret;
+}
+
+int aml_ge2d_process_enqueue(aml_ge2d_info_t *pge2dinfo)
+{
+    int ret = -1;
+
+    if (pge2dinfo->ge2d_fd >= 0)
+        ret = ge2d_process(pge2dinfo->ge2d_fd, pge2dinfo, 1);
+
+    return ret;
+}
+
+int aml_ge2d_post_queue(aml_ge2d_info_t *pge2dinfo)
+{
+    int ret = -1;
+
+    if (pge2dinfo->ge2d_fd >= 0)
+        ret = ge2d_post_queue(pge2dinfo->ge2d_fd);
 
     return ret;
 }
@@ -445,7 +465,16 @@ int aml_ge2d_execute(aml_ge2d_info_t *pge2dinfo)
     int ret = -1;
 
     if (pge2dinfo->ge2d_fd >= 0)
-        ret = ge2d_execute(pge2dinfo->ge2d_fd, pge2dinfo);
+        ret = ge2d_execute(pge2dinfo->ge2d_fd, pge2dinfo, 0);
+    return ret;
+}
+
+int aml_ge2d_execute_enqueue(aml_ge2d_info_t *pge2dinfo)
+{
+    int ret = -1;
+
+    if (pge2dinfo->ge2d_fd >= 0)
+        ret = ge2d_execute(pge2dinfo->ge2d_fd, pge2dinfo, 1);
     return ret;
 }
 

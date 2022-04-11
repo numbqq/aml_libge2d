@@ -546,4 +546,25 @@ struct ge2d_dmabuf_attach_s {
 #define GE2D_DETACH_DMA_FD   \
 	_IOW(GE2D_IOC_MAGIC, 0x0b, enum ge2d_data_type_e)
 #define GE2D_SET_CLUT _IOW(GE2D_IOC_MAGIC, 0x0c, struct ge2d_clut8_t)
+
+/* cmd queue */
+#define	GE2D_FILLRECTANGLE_ENQUEUE \
+	_IOW(GE2D_IOC_MAGIC, 0x0d, struct ge2d_para_s)
+#define	GE2D_BLEND_ENQUEUE         \
+	_IOW(GE2D_IOC_MAGIC, 0x0e, struct ge2d_para_s)
+#define GE2D_BLEND_NOALPHA_ENQUEUE \
+	_IOW(GE2D_IOC_MAGIC, 0x0f, struct ge2d_para_s)
+#define	GE2D_STRETCHBLIT_ENQUEUE   \
+	_IOW(GE2D_IOC_MAGIC, 0x10, struct ge2d_para_s)
+#define	GE2D_STRETCHBLIT_NOALPHA_ENQUEUE   \
+	_IOW(GE2D_IOC_MAGIC, 0x11, struct ge2d_para_s)
+#define	GE2D_BLIT_NOALPHA_ENQUEUE          \
+	_IOW(GE2D_IOC_MAGIC, 0x12, struct ge2d_para_s)
+#define	GE2D_BLIT_ENQUEUE                  \
+	_IOW(GE2D_IOC_MAGIC, 0x13, struct ge2d_para_s)
+#define GE2D_POST_QUEUE            \
+	_IO(GE2D_IOC_MAGIC, 0x14)
+#define GE2D_POST_QUEUE_NOBLOC    \
+	_IO(GE2D_IOC_MAGIC, 0x15)
+
 #endif /* GE2D_H */

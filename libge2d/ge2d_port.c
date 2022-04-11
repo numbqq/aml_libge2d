@@ -2720,7 +2720,8 @@ static int ge2d_blend_config_ex(int fd,aml_ge2d_info_t *pge2dinfo)
     return ge2d_success;
 }
 
-static int ge2d_fillrectangle(int fd,rectangle_t *rect,unsigned int color)
+static int ge2d_fillrectangle(int fd,rectangle_t *rect,unsigned int color,
+                              int enqueue)
 {
     int ret;
     ge2d_op_para_t op_ge2d_info;
@@ -2740,7 +2741,10 @@ static int ge2d_fillrectangle(int fd,rectangle_t *rect,unsigned int color)
     op_ge2d_info.dst_rect.h = rect->h;
     op_ge2d_info.color = color;
 
-    ret = ioctl(fd, GE2D_FILLRECTANGLE, &op_ge2d_info);
+    if (!enqueue)
+        ret = ioctl(fd, GE2D_FILLRECTANGLE, &op_ge2d_info);
+    else
+        ret = ioctl(fd, GE2D_FILLRECTANGLE_ENQUEUE, &op_ge2d_info);
     if (ret != 0) {
         E_GE2D("%s,%d,ret %d,ioctl failed!\n",__FUNCTION__,__LINE__, ret);
         return ge2d_fail;
@@ -2748,9 +2752,8 @@ static int ge2d_fillrectangle(int fd,rectangle_t *rect,unsigned int color)
     return ge2d_success;
 }
 
-
-
-static int ge2d_blit(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *rect,unsigned int dx,unsigned int dy)
+static int ge2d_blit(int fd, aml_ge2d_info_t *pge2dinfo, rectangle_t *rect,
+                     unsigned int dx, unsigned int dy, int enqueue)
 {
     int ret;
     int dst_format = pge2dinfo->dst_info.format;
@@ -2814,7 +2817,10 @@ static int ge2d_blit(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *rect,unsigne
         break;
     }
 
-    ret = ioctl(fd, GE2D_BLIT, &op_ge2d_info);
+    if (!enqueue)
+        ret = ioctl(fd, GE2D_BLIT, &op_ge2d_info);
+    else
+        ret = ioctl(fd, GE2D_BLIT_ENQUEUE, &op_ge2d_info);
     if (ret != 0) {
         E_GE2D("%s,%d,ret %d,ioctl failed!\n",__FUNCTION__,__LINE__, ret);
         return ge2d_fail;
@@ -2822,7 +2828,9 @@ static int ge2d_blit(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *rect,unsigne
     return ge2d_success;
 }
 
-static int ge2d_blit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *rect,unsigned int dx,unsigned int dy)
+static int ge2d_blit_noalpha(int fd, aml_ge2d_info_t *pge2dinfo,
+                             rectangle_t *rect,unsigned int dx,unsigned int dy,
+                             int enqueue)
 {
     int ret;
     int dst_format = pge2dinfo->dst_info.format;
@@ -2887,7 +2895,10 @@ static int ge2d_blit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *rect
         break;
     }
 
-    ret = ioctl(fd, GE2D_BLIT_NOALPHA, &op_ge2d_info);
+    if (!enqueue)
+        ret = ioctl(fd, GE2D_BLIT_NOALPHA, &op_ge2d_info);
+    else
+        ret = ioctl(fd, GE2D_BLIT_NOALPHA, &op_ge2d_info);
     if ( ret != 0) {
         E_GE2D("%s,%d,ret %d,ioctl failed!\n",__FUNCTION__,__LINE__, ret);
         return ge2d_fail;
@@ -2895,7 +2906,8 @@ static int ge2d_blit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *rect
     return ge2d_success;
 }
 
-static int ge2d_strechblit(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *srect,rectangle_t *drect)
+static int ge2d_strechblit(int fd, aml_ge2d_info_t *pge2dinfo,
+                           rectangle_t *srect,rectangle_t *drect, int enqueue)
 {
     int ret;
     int dst_format = pge2dinfo->dst_info.format;
@@ -2957,7 +2969,11 @@ static int ge2d_strechblit(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *srect,
     default:
         break;
     }
-    ret = ioctl(fd, GE2D_STRETCHBLIT, &op_ge2d_info);
+
+    if (!enqueue)
+        ret = ioctl(fd, GE2D_STRETCHBLIT, &op_ge2d_info);
+    else
+        ret = ioctl(fd, GE2D_STRETCHBLIT_ENQUEUE, &op_ge2d_info);
     if (ret != 0) {
         E_GE2D("%s,%d,ret %d,ioctl failed!\n",__FUNCTION__,__LINE__, ret);
         return ge2d_fail;
@@ -2966,7 +2982,9 @@ static int ge2d_strechblit(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *srect,
 }
 
 
-static int ge2d_strechblit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t *srect,rectangle_t *drect)
+static int ge2d_strechblit_noalpha(int fd, aml_ge2d_info_t *pge2dinfo,
+                                   rectangle_t *srect,rectangle_t *drect,
+                                   int enqueue)
 {
     int ret;
     int dst_format = pge2dinfo->dst_info.format;
@@ -3029,8 +3047,10 @@ static int ge2d_strechblit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t
         break;
     }
 
-
-    ret = ioctl(fd, GE2D_STRETCHBLIT_NOALPHA, &op_ge2d_info);
+    if (!enqueue)
+        ret = ioctl(fd, GE2D_STRETCHBLIT_NOALPHA, &op_ge2d_info);
+    else
+        ret = ioctl(fd, GE2D_STRETCHBLIT_NOALPHA_ENQUEUE, &op_ge2d_info);
     if (ret != 0) {
         E_GE2D("%s,%d,ret %d,ioctl failed!\n",__FUNCTION__,__LINE__, ret);
         return ge2d_fail;
@@ -3041,7 +3061,7 @@ static int ge2d_strechblit_noalpha(int fd,aml_ge2d_info_t *pge2dinfo,rectangle_t
 
 static int ge2d_blend(int fd, aml_ge2d_info_t *pge2dinfo,
                       rectangle_t *srect, rectangle_t *srect2,
-                      rectangle_t *drect, unsigned int op)
+                      rectangle_t *drect, unsigned int op, int enqueue)
 {
     int ret;
     ge2d_op_para_t op_ge2d_info;
@@ -3136,7 +3156,11 @@ static int ge2d_blend(int fd, aml_ge2d_info_t *pge2dinfo,
             blend_op.alpha_blending_dst_factor);
 
     D_GE2D("ge2d_blend op_ge2d_info.op=%x\n",op_ge2d_info.op);
-    ret = ioctl(fd, GE2D_BLEND, &op_ge2d_info);
+
+    if (!enqueue)
+        ret = ioctl(fd, GE2D_BLEND, &op_ge2d_info);
+    else
+        ret = ioctl(fd, GE2D_BLEND_ENQUEUE, &op_ge2d_info);
     if (ret != 0) {
         E_GE2D("%s,%d,ret %d,ioctl failed!\n",__FUNCTION__,__LINE__, ret);
         return ge2d_fail;
@@ -3147,7 +3171,7 @@ static int ge2d_blend(int fd, aml_ge2d_info_t *pge2dinfo,
 
 static int ge2d_blend_noalpha(int fd, aml_ge2d_info_t *pge2dinfo,
                               rectangle_t *srect, rectangle_t *srect2,
-                              rectangle_t *drect, unsigned int op)
+                              rectangle_t *drect, unsigned int op, int enqueue)
 {
     int ret;
     ge2d_op_para_t op_ge2d_info;
@@ -3243,7 +3267,11 @@ static int ge2d_blend_noalpha(int fd, aml_ge2d_info_t *pge2dinfo,
             blend_op.alpha_blending_dst_factor);
 
     D_GE2D("ge2d_blend op_ge2d_info.op=%x\n",op_ge2d_info.op);
-    ret = ioctl(fd, GE2D_BLEND_NOALPHA, &op_ge2d_info);
+
+    if (!enqueue)
+        ret = ioctl(fd, GE2D_BLEND_NOALPHA, &op_ge2d_info);
+    else
+        ret = ioctl(fd, GE2D_BLEND_NOALPHA_ENQUEUE, &op_ge2d_info);
     if (ret != 0) {
         E_GE2D("%s,%d,ret %d,ioctl failed!\n",__FUNCTION__,__LINE__, ret);
         return ge2d_fail;
@@ -3324,7 +3352,7 @@ void sync_src_dmabuf_to_device(aml_ge2d_info_t *pge2dinfo, int src_id)
 /* if get_dst_op_number() > 1, use this interface
  * ge2d_process = ge2d_config + ge2d_execute
  */
-int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
+int ge2d_process(int fd, aml_ge2d_info_t *pge2dinfo, int enqueue)
 {
     rectangle_t dst_rect;
     int dx = 0, dy = 0;
@@ -3346,7 +3374,7 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
 
             ret = ge2d_fillrectangle_config_ex(fd,pge2dinfo);
             if (ret == ge2d_success)
-                ge2d_fillrectangle(fd,&dst_rect,pge2dinfo->color);
+                ge2d_fillrectangle(fd,&dst_rect,pge2dinfo->color, enqueue);
             break;
         case AML_GE2D_BLIT:
             if (!is_rect_valid(&pge2dinfo->src_info[0]))
@@ -3362,9 +3390,9 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
                 ret = ge2d_blit_config_ex(fd,pge2dinfo);
                 if (ret == ge2d_success) {
                     if (is_no_alpha(pge2dinfo->src_info[0].format))
-                        ge2d_blit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy);
+                        ge2d_blit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy, enqueue);
                     else
-                        ge2d_blit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy);
+                        ge2d_blit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy, enqueue);
                 }
             }
             break;
@@ -3383,9 +3411,9 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
                 if (ret == ge2d_success) {
 
                     if (is_no_alpha(pge2dinfo->src_info[0].format))
-                        ge2d_strechblit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect);
+                        ge2d_strechblit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect, enqueue);
                     else
-                        ge2d_strechblit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect);
+                        ge2d_strechblit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect, enqueue);
 
                 }
             }
@@ -3414,20 +3442,20 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
                     if (pge2dinfo->b_src_swap)
                         ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
                             &(pge2dinfo->src_info[0].rect),
-                            &dst_rect,pge2dinfo->blend_mode);
+                            &dst_rect,pge2dinfo->blend_mode, enqueue);
                     else
                         ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
                             &(pge2dinfo->src_info[1].rect),
-                            &dst_rect,pge2dinfo->blend_mode);
+                            &dst_rect,pge2dinfo->blend_mode, enqueue);
                 } else {
                     if (pge2dinfo->b_src_swap)
                         ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
                             &(pge2dinfo->src_info[0].rect),
-                            &dst_rect,pge2dinfo->blend_mode);
+                            &dst_rect,pge2dinfo->blend_mode, enqueue);
                     else
                         ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
                             &(pge2dinfo->src_info[1].rect),
-                            &dst_rect,pge2dinfo->blend_mode);
+                            &dst_rect,pge2dinfo->blend_mode, enqueue);
                 }
             }
             break;
@@ -3437,6 +3465,17 @@ int ge2d_process(int fd,aml_ge2d_info_t *pge2dinfo)
     }
 
     return ge2d_success;
+}
+
+int ge2d_post_queue(int fd)
+{
+    int ret = -1;
+
+    ret = ioctl(fd, GE2D_POST_QUEUE, NULL);
+    if (ret < 0) {
+        E_GE2D("%s, attatch failed\n", __func__);
+        return ge2d_fail;
+    }
 }
 
 int ge2d_attach_dma_fd(int fd, aml_ge2d_info_t *pge2dinfo,
@@ -3553,7 +3592,7 @@ int ge2d_config(int fd,aml_ge2d_info_t *pge2dinfo)
     return ge2d_success;
 }
 
-int ge2d_execute(int fd,aml_ge2d_info_t *pge2dinfo)
+int ge2d_execute(int fd,aml_ge2d_info_t *pge2dinfo, int enqueue)
 {
     rectangle_t dst_rect;
     int dx = 0, dy = 0;
@@ -3571,16 +3610,16 @@ int ge2d_execute(int fd,aml_ge2d_info_t *pge2dinfo)
             dst_rect.x =  pge2dinfo->dst_info.rect.x;
             dst_rect.y = pge2dinfo->offset + pge2dinfo->dst_info.rect.y;
 
-            ret = ge2d_fillrectangle(fd,&dst_rect,pge2dinfo->color);
+            ret = ge2d_fillrectangle(fd,&dst_rect,pge2dinfo->color, enqueue);
             break;
         case AML_GE2D_BLIT:
             dx = pge2dinfo->dst_info.rect.x;
             dy = pge2dinfo->offset + pge2dinfo->dst_info.rect.y;
             pge2dinfo->dst_op_cnt = 0;
             if (is_no_alpha(pge2dinfo->src_info[0].format))
-                ret = ge2d_blit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy);
+                ret = ge2d_blit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy, enqueue);
             else
-                ret = ge2d_blit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy);
+                ret = ge2d_blit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy, enqueue);
             break;
         case AML_GE2D_STRETCHBLIT:
             dst_rect.w = pge2dinfo->dst_info.rect.w;
@@ -3590,9 +3629,9 @@ int ge2d_execute(int fd,aml_ge2d_info_t *pge2dinfo)
 
             pge2dinfo->dst_op_cnt = 0;
             if (is_no_alpha(pge2dinfo->src_info[0].format))
-                ret = ge2d_strechblit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect);
+                ret = ge2d_strechblit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect, enqueue);
             else
-                ret = ge2d_strechblit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect);
+                ret = ge2d_strechblit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect, enqueue);
 
             break;
         case AML_GE2D_BLEND:
@@ -3607,20 +3646,20 @@ int ge2d_execute(int fd,aml_ge2d_info_t *pge2dinfo)
                 if (pge2dinfo->b_src_swap)
                     ret = ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
                         &(pge2dinfo->src_info[0].rect),
-                        &dst_rect,pge2dinfo->blend_mode);
+                        &dst_rect,pge2dinfo->blend_mode, enqueue);
                 else
                     ret = ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
                         &(pge2dinfo->src_info[1].rect),
-                        &dst_rect,pge2dinfo->blend_mode);
+                        &dst_rect,pge2dinfo->blend_mode, enqueue);
             } else {
                 if (pge2dinfo->b_src_swap)
                     ret = ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
                         &(pge2dinfo->src_info[0].rect),
-                        &dst_rect,pge2dinfo->blend_mode);
+                        &dst_rect,pge2dinfo->blend_mode, enqueue);
                 else
                     ret = ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
                         &(pge2dinfo->src_info[1].rect),
-                        &dst_rect,pge2dinfo->blend_mode);
+                        &dst_rect,pge2dinfo->blend_mode, enqueue);
             }
             break;
         default:
@@ -3653,7 +3692,7 @@ int ge2d_process_ion(int fd,aml_ge2d_info_t *pge2dinfo)
             dst_rect.y = pge2dinfo->offset + pge2dinfo->dst_info.rect.y;
             ret = ge2d_fillrectangle_config_ex_ion(fd,pge2dinfo);
             if (ret == ge2d_success)
-                ge2d_fillrectangle(fd,&dst_rect,pge2dinfo->color);
+                ge2d_fillrectangle(fd,&dst_rect,pge2dinfo->color, 0);
             break;
         case AML_GE2D_BLIT:
             if (!is_rect_valid(&pge2dinfo->src_info[0]))
@@ -3669,9 +3708,9 @@ int ge2d_process_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 ret = ge2d_blit_config_ex_ion(fd,pge2dinfo);
                 if (ret == ge2d_success) {
                     if (is_no_alpha(pge2dinfo->src_info[0].format))
-                        ret = ge2d_blit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy);
+                        ret = ge2d_blit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy, 0);
                     else
-                        ret = ge2d_blit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy);
+                        ret = ge2d_blit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,dx,dy, 0);
                 }
             }
             break;
@@ -3690,9 +3729,9 @@ int ge2d_process_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                 if (ret == ge2d_success) {
 
                     if (is_no_alpha(pge2dinfo->src_info[0].format))
-                        ret = ge2d_strechblit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect);
+                        ret = ge2d_strechblit_noalpha(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect, 0);
                     else
-                        ret = ge2d_strechblit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect);
+                        ret = ge2d_strechblit(fd,pge2dinfo,&pge2dinfo->src_info[0].rect,&dst_rect, 0);
 
                 }
             }
@@ -3721,20 +3760,20 @@ int ge2d_process_ion(int fd,aml_ge2d_info_t *pge2dinfo)
                     if (pge2dinfo->b_src_swap)
                         ret = ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
                             &(pge2dinfo->src_info[0].rect),
-                            &dst_rect,pge2dinfo->blend_mode);
+                            &dst_rect,pge2dinfo->blend_mode, 0);
                     else
                         ret = ge2d_blend_noalpha(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
                             &(pge2dinfo->src_info[1].rect),
-                            &dst_rect,pge2dinfo->blend_mode);
+                            &dst_rect,pge2dinfo->blend_mode, 0);
                 } else {
                     if (pge2dinfo->b_src_swap)
                         ret = ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[1].rect),
                             &(pge2dinfo->src_info[0].rect),
-                            &dst_rect,pge2dinfo->blend_mode);
+                            &dst_rect,pge2dinfo->blend_mode, 0);
                     else
                         ret = ge2d_blend(fd,pge2dinfo,&(pge2dinfo->src_info[0].rect),
                             &(pge2dinfo->src_info[1].rect),
-                            &dst_rect,pge2dinfo->blend_mode);
+                            &dst_rect,pge2dinfo->blend_mode, 0);
                 }
             }
             break;
