@@ -2898,7 +2898,7 @@ static int ge2d_blit_noalpha(int fd, aml_ge2d_info_t *pge2dinfo,
     if (!enqueue)
         ret = ioctl(fd, GE2D_BLIT_NOALPHA, &op_ge2d_info);
     else
-        ret = ioctl(fd, GE2D_BLIT_NOALPHA, &op_ge2d_info);
+        ret = ioctl(fd, GE2D_BLIT_NOALPHA_ENQUEUE, &op_ge2d_info);
     if ( ret != 0) {
         E_GE2D("%s,%d,ret %d,ioctl failed!\n",__FUNCTION__,__LINE__, ret);
         return ge2d_fail;
