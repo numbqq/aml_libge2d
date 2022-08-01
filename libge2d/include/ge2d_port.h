@@ -29,6 +29,9 @@
 extern "C" {
 #endif
 
+int CANVAS_ALIGNED(int x);
+int YV12_Y_ALIGNED(int x);
+
 #define GE2D_MAX_PLANE  4
 
 enum ge2d_data_type_e {
